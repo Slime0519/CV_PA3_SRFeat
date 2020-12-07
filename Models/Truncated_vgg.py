@@ -1,11 +1,9 @@
-import torch
+
 import torch.nn as nn
-import numpy as np
 import torchvision.models as models
 import matplotlib.pyplot as plt
 from torchsummary import summary
 import os
-from PIL import Image
 
 PATCH_DIR ="Result_image/patchimage"
 def savepatch(DIRPATH, batch,layer):

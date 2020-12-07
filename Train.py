@@ -11,6 +11,10 @@ import argparse
 import os
 import utils
 
+from Models.Generator_128 import Generator
+from Models.Discriminator import Discriminator
+from Models.Truncated_vgg import truncated_vgg
+
 parser = argparse.ArgumentParser(description="SRGAN Training Module")
 parser.add_argument('--pre_trained', type = str, default=None, help = "path of pretrained models")
 parser.add_argument('--num_epochs', type = int, default=100, help="train epoch")
@@ -44,16 +48,18 @@ if __name__ == "__main__":
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
     vaild_dataloader = DataLoader(dataset=vaild_dataset, batch_size=1)
 
-    Gen_Model = Model.Generator()
-    Dis_Model = Model.Discriminator()
+    generator = Generator()
+    image_discriminator = Discriminator(imagesize = (294,294))
+    feat_discriminator = Discriminator(imagesize = (24,24))
 
-    Gen_optimizer = optim.Adam(Gen_Model.parameters(),lr= lr) #lr = 1e-4
-    Dis_optimizer = optim.Adam(Dis_Model.parameters(),lr = lr)
+    gen_optimizer = optim.Adam(generator.parameters(),lr= lr) #lr = 1e-4
+    imgdis_optimizer = optim.Adam(image_discriminator.parameters(),lr = lr)
+    featdis_optimizer = optim.Adam(feat_discriminator.parameters(),lr=lr)
+    truncat_vgg = truncated_vgg()  # vgg(5,4) loss
 
-    Vggloss = Truncated_vgg.vggloss()  # vgg(5,4) loss
-
-    content_criterion = nn.MSELoss()
+    mseloss = nn.MSELoss()
     adversal_criterion = nn.BCEWithLogitsLoss()
+
     PSNR_eval = np.zeros(TOTAL_EPOCH)
     PSNR_train = np.zeros(TOTAL_EPOCH)
     Train_Gen_loss = np.zeros(TOTAL_EPOCH)
@@ -61,12 +67,13 @@ if __name__ == "__main__":
     train_len = len(train_dataloader)
 
     start_epoch = 0
+    """
     if PRETRAINED_PATH is not None:
-        _, gen_modelpath = utils.load_module(os.path.join(PRETRAINED_PATH, "Generator"))
+        _, generatorpath = utils.load_module(os.path.join(PRETRAINED_PATH, "Generator"))
         start_epoch, dis_modelpath = utils.load_module(os.path.join(PRETRAINED_PATH, "Discriminator"))
         print(dis_modelpath)
         print("load module : saved on {} epoch".format(start_epoch))
-        Gen_Model.load_state_dict(torch.load(gen_modelpath))
+        generator.load_state_dict(torch.load(generatorpath))
         Dis_Model.load_state_dict(torch.load(dis_modelpath))
 
     if PRE_RESULT_DIR is not None:
@@ -74,18 +81,22 @@ if __name__ == "__main__":
         PSNR_Train = np.load("result_data/PSNR_train.npy")
         Train_Dis_loss = np.load("result_data/Train_Dis_loss.npy")
         Train_Gen_loss = np.load("result_data/Train_Gen_loss.npy")
-
-    Gen_Model = Gen_Model.to(device)
-    Dis_Model = Dis_Model.to(device)
-    Vggloss = Vggloss.to(device)
+    """
+    generator = generator.to(device)
+    image_discriminator = image_discriminator.to(device)
+    truncat_vgg = truncat_vgg.to(device)
 
 
     for epoch in range(start_epoch,TOTAL_EPOCH):
         # prepare training
-        Gen_Model.train()
-        Dis_Model.train()
+        generator.train()
+        image_discriminator.train()
+        feat_discriminator.train()
+
         Gen_loss_total = 0
-        Dis_loss_total = 0
+        imgdis_loss_total = 0
+        featdis_loss_total = 0
+
         total_PSNR_train = 0
         print("----epoch {}/{}----".format(epoch+1, TOTAL_EPOCH))
         print("----training step----")
@@ -101,55 +112,63 @@ if __name__ == "__main__":
             """
             input, target = input.to(device), target.to(device)
 
+            imgdis_optimizer.zero_grad()
+            gen_optimizer.zero_grad()
+            featdis_optimizer.zero_grad()
 
-            # train Discriminator
-            Dis_optimizer.zero_grad()
+            #generate fake hr images
+            fake_hr = generator(input)
+           # generate vgg pathces
+            fake_vgg_patch = truncat_vgg(fake_hr)/12.75
+            real_vgg_patch = truncat_vgg(target)/12.75
 
-            lr_generated = Gen_Model(input)
-            lr_discriminated = Dis_Model(lr_generated)
-            hr_discriminated = Dis_Model(target)
+           # train image Discriminator
+            img_fake_crimed = image_discriminator(fake_hr)
+            img_real_crimed = image_discriminator(target)
 
-            Mseloss_temp = content_criterion(lr_generated, target)
-            PSNR_temp = 10 * torch.log10(1 / Mseloss_temp)
-            total_PSNR_train += PSNR_temp
+            fake_score = adversal_criterion(img_fake_crimed,torch.zeros_like(img_fake_crimed))
+            target_score = adversal_criterion(img_real_crimed,torch.ones_like(img_real_crimed))
 
-            dis_adversarial_loss = adversal_criterion(lr_discriminated,
-                                                  torch.zeros_like(lr_discriminated)) + adversal_criterion(hr_discriminated,
-                                                                                                           torch.ones_like(
-                                                                                                               hr_discriminated))
+            img_adversarial_loss = fake_score+target_score
 
-            dis_adversarial_loss.backward()
-            Dis_optimizer.step()
+            img_adversarial_loss.backward()
+            imgdis_optimizer.step()
 
-            Dis_loss_total += float(torch.mean(hr_discriminated))
-            #    if grad_clip is not None:
-            #          torch.utils.clip_gradient
+            #train feature Discriminator
+            feat_fake_crimed = feat_discriminator(fake_vgg_patch)
+            feat_real_crimed = feat_discriminator(real_vgg_patch)
+
+            feat_fake_score = adversal_criterion(feat_fake_crimed,torch.zeros_like(feat_fake_crimed))
+            feat_real_score = adversal_criterion(feat_real_crimed,torch.ones_like(feat_real_crimed))
+
+            feat_adversarial_loss = feat_fake_score+feat_real_score
+            feat_adversarial_loss.backward()
+            featdis_optimizer.step()
 
             # train Generator
-            Gen_optimizer.zero_grad()
+            imgdis_optimizer.requires_grad_(False)
+            featdis_optimizer.requires_grad_(False)
 
-            lr_generated = Gen_Model(input)
-            lr_discriminated = Dis_Model(lr_generated)
+            gen_image_crimed = image_discriminator(fake_hr)
+            gen_feat_crimed = feat_discriminator(fake_hr)
 
-            gen_adversarial_loss = adversal_criterion(lr_discriminated, torch.ones_like(lr_discriminated))
-            #  content_loss = content_criterion(Vggloss(target),Vggloss(lr_generated))
-            #print(np.array(target.cpu().detach()).shape)
-           # print(np.array(lr_generated.cpu().detach()).shape)
-            content_loss = 0.006*Vggloss(target, lr_generated) + content_criterion(lr_generated,target)
+            gen_img_score = adversal_criterion(gen_image_crimed,torch.ones_like(gen_image_crimed))
+            gen_feat_score = adversal_criterion(gen_feat_score,torch.ones_like(gen_feat_score))
+            perceptual_loss = mseloss(fake_vgg_patch,real_vgg_patch)
+            #common_loss = mseloss(fake_hr,target)
 
-            Gen_loss = content_loss + 0.001 * gen_adversarial_loss
+            gen_total_loss = perceptual_loss + 1e-3*(gen_img_score+gen_feat_score)
 
-            Gen_loss.backward()
-            Gen_optimizer.step()
-            Gen_loss_total += float(torch.mean(lr_discriminated))
+            gen_total_loss.backward()
+            gen_optimizer.step()
             print("epoch {} training step : {}/{}".format(epoch+1, i + 1, train_len))
 
-        Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)
-        Train_Dis_loss[epoch] = Dis_loss_total / len(train_dataloader)
-        PSNR_train[epoch] = total_PSNR_train / len(train_dataloader)
-        print("train PSNR : {}".format(total_PSNR_train / len(train_dataloader)))
-
-        Gen_Model.eval()
+     #   Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)
+     #   Train_Dis_loss[epoch] = Dis_loss_total / len(train_dataloader)
+     #   PSNR_train[epoch] = total_PSNR_train / len(train_dataloader)
+     #   print("train PSNR : {}".format(total_PSNR_train / len(train_dataloader)))
+    """
+        generator.eval()
         Dis_Model.eval()
         total_PSNR_eval = 0
         print("----evaluation step----")
@@ -157,7 +176,7 @@ if __name__ == "__main__":
             # val_bar = tqdm(vaild_dataloader)
             for input, target in vaild_dataloader:
                 input = input.to(device)
-                fakeimage = Gen_Model(input)
+                fakeimage = generator(input)
                 fakeimage = np.array(fakeimage.cpu().detach())
                 fakeimage = fakeimage.squeeze()
                 print(fakeimage.shape)
@@ -169,10 +188,14 @@ if __name__ == "__main__":
 
             PSNR_eval[epoch] = total_PSNR_eval / len(vaild_dataloader)
             print("evaluation PSNR : {}".format(total_PSNR_eval / len(vaild_dataloader)))
+            
+    
         np.save("result_data/Train_Gen_loss.npy",Train_Gen_loss)
         np.save("result_data/Train_Dis_loss.npy", Train_Dis_loss)
         np.save("result_data/PSNR_train.npy",PSNR_train)
         np.save("result_data/PSNR_eval.npy",PSNR_eval)
-        torch.save(Gen_Model.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
-        torch.save(Dis_Model.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
-
+    
+        torch.save(generator.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
+        torch.save(feat_discriminator.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
+        torch.save(feat_discriminator.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
+    """

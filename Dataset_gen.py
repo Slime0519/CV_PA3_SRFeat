@@ -8,16 +8,15 @@ from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 import cv2
 
-def hr_transform(crop_size = 96):
+def hr_transform(crop_size = 296):
     transform = torch_transform.Compose([
         torch_transform.ToPILImage(),
-       # torch_transform.RandomCrop(crop_size), #raise (ValueError : empty range for randrange())
         torch_transform.CenterCrop(crop_size),
         torch_transform.ToTensor()
     ])
     return transform
 
-def lr_transform(crop_size = 96, upscale_factor = 4):
+def lr_transform(crop_size = 296, upscale_factor = 4):
     transform = torch_transform.Compose([
         torch_transform.ToPILImage(),
         torch_transform.Resize(int(crop_size//upscale_factor),interpolation=Image.BICUBIC),
@@ -25,10 +24,10 @@ def lr_transform(crop_size = 96, upscale_factor = 4):
     ])
     return transform
 
-class Dataset_Train(Dataset):
-    def __init__(self, dirpath, crop_size = 96, upscale_factor = 4):
-        super(Dataset_Train, self).__init__()
-        self.imagelist = glob.glob(os.path.join(dirpath,"*.jpg"))
+class Pretrain_Dataset_Train(Dataset):
+    def __init__(self, dirpath, crop_size = 296, upscale_factor = 4, extension = '.jpg'):
+        super(Pretrain_Dataset_Train, self).__init__()
+        self.imagelist = glob.glob(os.path.join(dirpath,"*"+extension))
       # self.cropsize = crop_size - (crop_size%upscale_factor)
         self.cropsize = crop_size
         self.hr_transform = hr_transform(self.cropsize)
@@ -37,7 +36,7 @@ class Dataset_Train(Dataset):
     def __getitem__(self, index):
         image = Image.open(self.imagelist[index])
         image = np.array(image)
-       # cropped_image = utils.randomcrop(image,self.cropsize)
+
         hr_image = self.hr_transform(image)
         lr_image = self.lr_transform(hr_image)
 
@@ -45,6 +44,26 @@ class Dataset_Train(Dataset):
 
     def __len__(self):
         return len(self.imagelist)
+
+class Dataset_Train(Dataset):
+    def __init__(self, hr_dirpath, lr_dirpath, upscale_factor = 4, extension = '.png'):
+        super(Dataset_Train, self).__init__()
+        self.hr_imagelist = glob.glob(os.path.join(hr_dirpath,"*"+extension))
+        self.lr_imagelist = glob.glob(os.path.join(lr_dirpath,"*"+extension))
+        self.totensor = torch_transform.Compose([
+            torch_transform.ToTensor()
+        ])
+    def __getitem__(self, index):
+        hr_image = Image.open(self.hr_imagelist[index])
+        lr_image = Image.open(self.lr_imagelist[index])
+
+        hr_image = self.totensor(hr_image)
+        lr_image = self.totensor(lr_image)
+
+        return lr_image, hr_image
+
+    def __len__(self):
+        return len(self.hr_imagelist)
 
 class Dataset_Vaild(Dataset):
     def __init__(self, dirpath, upscale_factor = 4):

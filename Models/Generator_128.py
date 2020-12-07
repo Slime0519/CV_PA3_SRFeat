@@ -2,6 +2,7 @@ import numpy as np
 import torch.nn as nn
 
 from Models.common import Residual_block, Pixelsuffler_block
+
 class Generator(nn.Module):
     def __init__(self, channelsize = 128, scale_factor = 4, resblock_num = 16):
         super(Generator, self).__init__()
