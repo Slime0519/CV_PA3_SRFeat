@@ -27,6 +27,7 @@ class Generator(nn.Module):
 
         self.lastconv = nn.Conv2d(in_channels=channelsize, out_channels=3, kernel_size=3, padding=1)
 
+
     def forward(self,x):
         #first conv
         first_feature = self.Conv1(x)
@@ -47,3 +48,14 @@ class Generator(nn.Module):
 
         #passing 5 residual blocks
         return out
+
+    def weight_initialization(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                fan_in, fan_out = nn.init._calculate_fan_in_and_fan_out(m.weight)
+                k = 1/np.sqrt(fan_in)
+                nn.init.uniform_(m.weight, a=-k,b=k)
+                nn.init.uniform_(m.bias, a=-k,b=k)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
