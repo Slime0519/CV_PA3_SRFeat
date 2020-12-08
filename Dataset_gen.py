@@ -34,7 +34,7 @@ class Pretrain_Dataset_Train(Dataset):
         self.lr_transform = lr_transform(self.cropsize, upscale_factor=upscale_factor)
 
     def __getitem__(self, index):
-        image = Image.open(self.imagelist[index])
+        image = Image.open(self.imagelist[index]).convert("RGB")
         image = np.array(image)
 
         hr_image = self.hr_transform(image)
@@ -54,8 +54,8 @@ class Dataset_Train(Dataset):
             torch_transform.ToTensor()
         ])
     def __getitem__(self, index):
-        hr_image = Image.open(self.hr_imagelist[index])
-        lr_image = Image.open(self.lr_imagelist[index])
+        hr_image = Image.open(self.hr_imagelist[index]).convert("RGB")
+        lr_image = Image.open(self.lr_imagelist[index]).convert("RGB")
 
         hr_image = self.totensor(hr_image)
         lr_image = self.totensor(lr_image)

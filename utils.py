@@ -25,15 +25,18 @@ def randomcrop(image, crop_size):
 
     return cropped_image
 
-def remove_small_images(minimum=296):
-    Dataset_PATH = '/'
-    imagelist = os.listdir('')
+def remove_small_images(datasetpath, minimum=296):
+    Dataset_PATH = datasetpath
+    imagelist = os.listdir(Dataset_PATH)
 
     removelist = []
     for imagename in imagelist:
         imagepath = os.path.join(Dataset_PATH,imagename)
         image = Image.open(imagepath)
         imagesize = np.array(image).shape
+
+        #if (imagesize[2]==1):
+        #    removelist.append(imagepath)
 
         if (imagesize[0] <minimum) or (imagesize[1]<minimum):
             removelist.append(imagepath)

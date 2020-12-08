@@ -7,8 +7,7 @@ import torch.nn as nn
 import Dataset_gen
 import tqdm
 
-import Model
-from Models import Truncated_vgg
+
 import argparse
 import os
 import utils
@@ -47,6 +46,8 @@ if __name__ == "__main__":
     PSNR_array_Vaild = np.zeros(TOTAL_EPOCHS)
 
     DIRPATH_PRETRAIN = DIRPATH_PRETRAIN
+
+    utils.remove_small_images(DIRPATH_PRETRAIN,minimum=296)
     train_dataset = Dataset_gen.Pretrain_Dataset_Train(dirpath=DIRPATH_PRETRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
 
     
