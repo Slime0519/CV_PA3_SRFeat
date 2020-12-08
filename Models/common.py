@@ -9,8 +9,8 @@ class Residual_block(nn.Module):
         super(Residual_block, self).__init__()
         self.Conv1 = nn.Conv2d(in_channels=channel,out_channels=channel,kernel_size=3,padding=1)
         self.Conv2 = nn.Conv2d(in_channels=channel,out_channels=channel,kernel_size=3,padding=1)
-        self.BN1 = nn.BatchNorm2d(64)
-        self.BN2 = nn.BatchNorm2d(64)
+        self.BN1 = nn.BatchNorm2d(channel)
+        self.BN2 = nn.BatchNorm2d(channel)
         self.LeakyReLU1 = nn.LeakyReLU(negative_slope=0.2)
 
     def forward(self,x):

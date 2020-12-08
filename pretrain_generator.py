@@ -65,9 +65,9 @@ if __name__ == "__main__":
     start_epoch = 0
     
  #   generator = generator.to(device)
-#    generator = nn.DataParallel(generator)
-  #  generator = generator.to('cuda')
-    generator = generator.cuda()
+    generator = nn.DataParallel(generator)
+    generator = generator.to(device)
+  #  generator = generator.cuda()
 
     for epoch in range(start_epoch, TOTAL_EPOCHS):
         # prepare training
