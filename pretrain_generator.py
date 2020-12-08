@@ -49,11 +49,12 @@ if __name__ == "__main__":
     DIRPATH_PRETRAIN = DIRPATH_PRETRAIN
     train_dataset = Dataset_gen.Pretrain_Dataset_Train(dirpath=DIRPATH_PRETRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
 
-    train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+    
+    train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 
 
     generator = Generator()
-    gen_optimizer = optim.Adam(generator.parameters(), lr=lr, betas=())  # lr = 1e-4
+    gen_optimizer = optim.Adam(generator.parameters(), lr=lr)  # lr = 1e-4
     scheduler = optim.lr_scheduler.CosineAnnealingLR(gen_optimizer,T_max = TOTAL_EPOCHS//2, eta_min=1e-6)
     mseloss = nn.MSELoss()
 
@@ -62,6 +63,7 @@ if __name__ == "__main__":
     datasize = len(train_dataloader)
 
     start_epoch = 0
+
     generator = nn.DataParallel(generator)
     generator = generator.to(device)
 
@@ -74,7 +76,7 @@ if __name__ == "__main__":
 
         print("----epoch {}/{}----".format(epoch + 1, TOTAL_EPOCHS))
         print("----training step----")
-        for lr_image, hr_image in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
+        for input,target in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
             # print("---batch {}---".format(i))
             target_list = np.array(target)
             input_list = np.array(input)

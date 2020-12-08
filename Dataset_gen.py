@@ -39,7 +39,7 @@ class Pretrain_Dataset_Train(Dataset):
 
         hr_image = self.hr_transform(image)
         lr_image = self.lr_transform(hr_image)
-
+        print("imagesize : {}".format(np.shape(image)))
         return lr_image, hr_image
 
     def __len__(self):
