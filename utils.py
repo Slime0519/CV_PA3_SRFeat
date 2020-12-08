@@ -15,7 +15,7 @@ def get_psnr(img1, img2, min_value=0, max_value=1):
     if mse == 0:
         return 100
     PIXEL_MAX = max_value - min_value
-    return 10 * torch.log10_(PIXEL_MAX ** 2) / mse
+    return 10 * torch.log10((PIXEL_MAX ** 2) / mse)
 
 def load_model(model,filepath,device):
     model.load_state_dict(torch.load(filepath))

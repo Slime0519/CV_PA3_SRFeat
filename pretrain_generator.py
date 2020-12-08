@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     PRETRAINED_EPOCH = opt.pre_trained
     TOTAL_EPOCHS = opt.num_epochs
-    PRE_RESULT_DIR = opt.pre_resulted
+
 
     loss_array_Train = np.zeros(TOTAL_EPOCHS)
     PSNR_array_Train = np.zeros(TOTAL_EPOCHS)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     datasize = len(train_dataloader)
 
     PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN,"generator_{}th_model.pth".format(PRETRAINED_EPOCH-1))
-    generator = utils.load_model(generator, filepath = PRETRAINED_MODELPATH)
+ #   generator = utils.load_model(generator, filepath = PRETRAINED_MODELPATH)
     generator = nn.DataParallel(generator)
     generator = generator.to(device)
 
@@ -102,6 +102,7 @@ if __name__ == "__main__":
 
             total_MSE_train += pretrain_loss
             temp_psnr = utils.get_psnr(fake_hr,hr_image)
+            #accum_psnr += 10 * torch.log(1/pretrain_loss)
             accum_psnr += temp_psnr
 
             pretrain_loss.backward()
