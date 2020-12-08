@@ -66,7 +66,8 @@ if __name__ == "__main__":
     
  #   generator = generator.to(device)
 #    generator = nn.DataParallel(generator)
-    generator = generator.to('cuda')
+  #  generator = generator.to('cuda')
+    generator = generator.cuda()
 
     for epoch in range(start_epoch, TOTAL_EPOCHS):
         # prepare training
