@@ -47,11 +47,11 @@ if __name__ == "__main__":
 
     DIRPATH_PRETRAIN = DIRPATH_PRETRAIN
 
-    utils.remove_small_images(DIRPATH_PRETRAIN,minimum=296)
+#    utils.remove_small_images(DIRPATH_PRETRAIN,minimum=296)
     train_dataset = Dataset_gen.Pretrain_Dataset_Train(dirpath=DIRPATH_PRETRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
 
     
-    train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+    train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, pin_memory= True)
 
 
     generator = Generator()
@@ -109,8 +109,8 @@ if __name__ == "__main__":
 
         print("average PSNR : {} | MSE : {}".format(PSNR_train[epoch],Train_Gen_loss[epoch]))
 
-        if (epoch +1) %10 ==0:
-            torch.save(generator.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
+        #if (epoch +1) %10 ==0:
+        torch.save(generator.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
     #   Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)
     #   Train_Dis_loss[epoch] = Dis_loss_total / len(train_dataloader)
     #   PSNR_train[epoch] = total_PSNR_train / len(train_dataloader)
