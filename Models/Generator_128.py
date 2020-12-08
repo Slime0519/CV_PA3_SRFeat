@@ -20,6 +20,9 @@ class Generator(nn.Module):
             skipconnection = nn.Conv2d(in_channels=channelsize,out_channels=channelsize,kernel_size=1)
             self.set_longrange_connection.append(skipconnection)
 
+        self.set_resblock = nn.ModuleList(self.set_resblock)
+        self.set_longrange_connection = nn.ModuleList(self.set_longrange_connection)
+
         Upsampling_layers = []
         for _ in range(self.pixelsuffle_layer_num):
             Upsampling_layers.append(Pixelsuffler_block(in_channels=channelsize)) #2배씩 upscaling
