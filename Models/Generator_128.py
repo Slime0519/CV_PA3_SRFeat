@@ -30,6 +30,7 @@ class Generator(nn.Module):
 
         self.lastconv = nn.Conv2d(in_channels=channelsize, out_channels=3, kernel_size=3, padding=1)
 
+        self.weight_initialization()
 
     def forward(self,x):
         #first conv
