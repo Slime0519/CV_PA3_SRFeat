@@ -22,7 +22,7 @@ class Generator(nn.Module):
 
         Upsampling_layers = []
         for _ in range(self.pixelsuffle_layer_num):
-            Upsampling_layers.append(Pixelsuffler_block(input_channels=channelsize)) #2배씩 upscaling
+            Upsampling_layers.append(Pixelsuffler_block(in_channels=channelsize)) #2배씩 upscaling
         self.upsmapling_module = nn.Sequential(*Upsampling_layers)
 
         self.lastconv = nn.Conv2d(in_channels=channelsize, out_channels=3, kernel_size=3, padding=1)

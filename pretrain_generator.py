@@ -101,6 +101,9 @@ if __name__ == "__main__":
         Train_Gen_loss[epoch] = total_MSE_train/datasize
 
         print("average PSNR : {} | MSE : {}".format(PSNR_train[epoch],Train_Gen_loss[epoch]))
+
+        if (epoch +1) %10 ==0:
+            torch.save(generator.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
     #   Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)
     #   Train_Dis_loss[epoch] = Dis_loss_total / len(train_dataloader)
     #   PSNR_train[epoch] = total_PSNR_train / len(train_dataloader)
