@@ -23,7 +23,7 @@ parser.add_argument('--pre_resulted', type=str, default=None, help="data of prev
 BATCH_SIZE = 9
 CROP_SIZE = 296
 UPSCALE_FACTOR = 4
-DIRPATH_PRETRAIN = "Dataset/train2017"
+DIRPATH_PRETRAIN = "COCO/train2017"
 
 TOTAL_EPOCHS = 20
 grad_clip = None
