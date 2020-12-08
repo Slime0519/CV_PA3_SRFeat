@@ -15,7 +15,7 @@ from Models.Generator_128 import Generator
 from Models.Discriminator import Discriminator
 from Models.Truncated_vgg import truncated_vgg
 
-parser = argparse.ArgumentParser(description="SRGAN Training Module")
+parser = argparse.ArgumentParser(description="SRFeat Training Module")
 parser.add_argument('--pre_trained', type = str, default=None, help = "path of pretrained models")
 parser.add_argument('--num_epochs', type = int, default=100, help="train epoch")
 parser.add_argument('--pre_resulted', type = str, default=None,  help = "data of previous step")

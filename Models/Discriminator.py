@@ -27,7 +27,7 @@ class Discriminator(nn.Module):
         self.Sigmoid = nn.Sigmoid()
 
     def forward(self,x):
-
+        x = 2.0 * x - 1.0
         out = self.ConvBlock_module(x)
         out = self.Dense1(out)
         out = self.LeakyReLU2(out)

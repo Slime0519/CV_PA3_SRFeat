@@ -33,6 +33,15 @@ class truncated_vgg(nn.Module):
     def forward(self, x):
         out = self.feature_extraction_model(x)
         return out
+
+    def weights_init(m):
+        if isinstance(m, (nn.Conv2d, nn.Linear)):
+            nn.init.normal_(m.weight, std=0.1)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.BatchNorm2d):
+            nn.init.ones_(m.weight)
+            nn.init.zeros_(m.bias)
     """
     def forward(self,input,show = False):
         out = self.feature_extraction_model(input)

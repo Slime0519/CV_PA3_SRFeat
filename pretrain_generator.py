@@ -14,15 +14,16 @@ import utils
 
 from Models.Generator_128 import Generator
 
-parser = argparse.ArgumentParser(description="SRGAN Training Module")
-parser.add_argument('--pre_trained', type=str, default=None, help="path of pretrained models")
+parser = argparse.ArgumentParser(description="SRFeat Training Module")
+parser.add_argument('--pre_trained', type=int, default=0, help="path of pretrained models")
 parser.add_argument('--num_epochs', type=int, default=20, help="train epoch")
-parser.add_argument('--pre_resulted', type=str, default=None, help="data of previous step")
+
 
 BATCH_SIZE = 9
 CROP_SIZE = 296
 UPSCALE_FACTOR = 4
-DIRPATH_PRETRAIN = "COCO/train2017"
+DIRPATH_TRAIN = "COCO/train2017"
+DIRPATH_PRETRAIN = "Trained_model/Generator"
 
 TOTAL_EPOCHS = 20
 grad_clip = None
@@ -37,7 +38,7 @@ if __name__ == "__main__":
 
     opt = parser.parse_args()
 
-    PRETRAINED_PATH = opt.pre_trained
+    PRETRAINED_EPOCH = opt.pre_trained
     TOTAL_EPOCHS = opt.num_epochs
     PRE_RESULT_DIR = opt.pre_resulted
 
@@ -45,30 +46,34 @@ if __name__ == "__main__":
     PSNR_array_Train = np.zeros(TOTAL_EPOCHS)
     PSNR_array_Vaild = np.zeros(TOTAL_EPOCHS)
 
-    DIRPATH_PRETRAIN = DIRPATH_PRETRAIN
-
 #    utils.remove_small_images(DIRPATH_PRETRAIN,minimum=296)
-    train_dataset = Dataset_gen.Pretrain_Dataset_Train(dirpath=DIRPATH_PRETRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
-
-    
+    train_dataset = Dataset_gen.Pretrain_Dataset_Train(dirpath=DIRPATH_TRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, pin_memory= True)
-
 
     generator = Generator()
     gen_optimizer = optim.Adam(generator.parameters(), lr=lr)  # lr = 1e-4
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(gen_optimizer,T_max = TOTAL_EPOCHS//2, eta_min=1e-6)
+    #scheduler = optim.lr_scheduler.CosineAnnealingLR(gen_optimizer, T_max = TOTAL_EPOCHS//2, eta_min=1e-6)
+    scheduler = optim.lr_scheduler.MultiStepLR(gen_optimizer, milestones=[10, 15], gamma=0.1)
+
     mseloss = nn.MSELoss()
 
     PSNR_train = np.zeros(TOTAL_EPOCHS)
     Train_Gen_loss = np.zeros(TOTAL_EPOCHS)
     datasize = len(train_dataloader)
 
-    start_epoch = 0
-    
- #   generator = generator.to(device)
+    PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN,"generator_{}th_model.pth".format(PRETRAINED_EPOCH-1))
+    generator = utils.load_model(generator, filepath = PRETRAINED_MODELPATH)
     generator = nn.DataParallel(generator)
     generator = generator.to(device)
-  #  generator = generator.cuda()
+
+    start_epoch = 0
+
+    if PRETRAINED_EPOCH>0:
+        start_epoch = PRETRAINED_EPOCH
+        for i in range(min(PRETRAINED_EPOCH,TOTAL_EPOCHS//2)):
+            scheduler.step()
+
+    state_dict= {}
 
     for epoch in range(start_epoch, TOTAL_EPOCHS):
         # prepare training
@@ -78,7 +83,7 @@ if __name__ == "__main__":
         accum_psnr = 0
 
         print("----epoch {}/{}----".format(epoch + 1, TOTAL_EPOCHS))
-        print("----training step----")
+        #print("----training step----")
         for lr_image,hr_image in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
             # print("---batch {}---".format(i))
             target_list = np.array(hr_image)
@@ -101,8 +106,8 @@ if __name__ == "__main__":
             pretrain_loss.backward()
             gen_optimizer.step()
 
-        if epoch<TOTAL_EPOCHS//2:
-            scheduler.step()
+
+        scheduler.step()
 
         PSNR_train[epoch] = accum_psnr/datasize
         Train_Gen_loss[epoch] = total_MSE_train/datasize
@@ -111,6 +116,8 @@ if __name__ == "__main__":
 
         #if (epoch +1) %10 ==0:
         torch.save(generator.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
+        np.save("Trained_result/pretrain/PSNR_{}_to_{}.npy".format(start_epoch,epoch),PSNR_train)
+        np.save("Trained_result/pretrain/Train_Gen_loss_{}_to_{}.npy".format(start_epoch,epoch),Train_Gen_loss)
     #   Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)
     #   Train_Dis_loss[epoch] = Dis_loss_total / len(train_dataloader)
     #   PSNR_train[epoch] = total_PSNR_train / len(train_dataloader)

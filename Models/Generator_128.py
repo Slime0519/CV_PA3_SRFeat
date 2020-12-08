@@ -34,6 +34,7 @@ class Generator(nn.Module):
 
     def forward(self,x):
         #first conv
+        x = 2.0 * x - 1.0
         first_feature = self.Conv1(x)
 
         set_resout = []
@@ -51,6 +52,7 @@ class Generator(nn.Module):
         out = self.lastconv(recon_out)
 
         #passing 5 residual blocks
+        out = 0.5 * out + 0.5
         return out
 
     def weight_initialization(self):

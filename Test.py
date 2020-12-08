@@ -29,7 +29,7 @@ def regularization_image(image):
 
 
 
-def compare_image(bicubic_image,srgan_image,epoch, save = False, num =0):
+def compare_image(bicubic_image,srfeat_image,epoch, save = False, num =0):
     fig = plt.figure()
     rows = 1
     columns = 2
@@ -39,10 +39,10 @@ def compare_image(bicubic_image,srgan_image,epoch, save = False, num =0):
     bicubic_grid.set_title("bicubic interpolation")
     bicubic_grid.axis("off")
 
-    srgan_grid= fig.add_subplot(rows, columns, 2)
-    srgan_grid.imshow(srgan_image)
-    srgan_grid.set_title("SRGAN")
-    srgan_grid.axis("off")
+    srfeat_grid= fig.add_subplot(rows, columns, 2)
+    srfeat_grid.imshow(srfeat_image)
+    srfeat_grid.set_title("SRGAN")
+    srfeat_grid.axis("off")
 
     if save:
         plt.savefig(os.path.join(savedir,"compare","epoch_{}".format(epoch),"image_{}".format(num)),dpi=500)
@@ -92,13 +92,13 @@ if __name__ == "__main__":
       #  PIL_Input_Image.save("Result_image/bicubic/epoch{}_image18.png".format(model_epoch)) #save large size image
 
        # PIL_output_Image = Image.fromarray(regularized_output_image).convert('RGB')
-        #PIL_output_Image.save("Result_image/srgan/epoch{}_image{}.png".format(model_epoch, i))
-      #  PIL_output_Image.save("Result_image/srgan/epoch{}_image18.png".format(model_epoch))
+        #PIL_output_Image.save("Result_image/srfeat/epoch{}_image{}.png".format(model_epoch, i))
+      #  PIL_output_Image.save("Result_image/srfeat/epoch{}_image18.png".format(model_epoch))
 
-      #  compare_image(bicubic_image=regularized_input_image, srgan_image=regularized_output_image, epoch=model_epoch,
+      #  compare_image(bicubic_image=regularized_input_image, srfeat_image=regularized_output_image, epoch=model_epoch,
        #               save=True, num=i+1)
       #  if i % 10 == 0:
-        #    compare_image(bicubic_image=regularized_input_image,srgan_image=regularized_output_image,epoch=model_epoch,save = False)
+        #    compare_image(bicubic_image=regularized_input_image,srfeat_image=regularized_output_image,epoch=model_epoch,save = False)
             #pltimage.imsave(os.path.join(savedir,"my_{}th_image.jpg".format(i)),regularized_output_image)
 
     PSNR_eval = np.load(os.path.join(result_dirpath,"PSNR_eval.npy"))

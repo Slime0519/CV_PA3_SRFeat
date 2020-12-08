@@ -28,10 +28,10 @@ def compare_image(image1, image2, image1_epoch, image2_epoch, save = False, num 
     bicubic_grid.set_title("epoch {} model".format(image1_epoch))
     bicubic_grid.axis("off")
 
-    srgan_grid= fig.add_subplot(rows, columns, 2)
-    srgan_grid.imshow(image2)
-    srgan_grid.set_title("epoch {} model".format(image2_epoch))
-    srgan_grid.axis("off")
+    srfeat_grid= fig.add_subplot(rows, columns, 2)
+    srfeat_grid.imshow(image2)
+    srfeat_grid.set_title("epoch {} model".format(image2_epoch))
+    srfeat_grid.axis("off")
     if save:
         plt.savefig(os.path.join(savedir,"compare","compare_{}_{}".format(image1_epoch,image2_epoch),"image_{}".format(num)),dpi=500)
     else:
