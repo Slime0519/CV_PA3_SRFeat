@@ -34,7 +34,7 @@ class Generator(nn.Module):
 
         set_resout = []
         pre_out = first_feature
-        for resblock in self.resblock_set:
+        for resblock in self.set_resblock:
             pre_out = resblock(pre_out)
             set_resout.append(pre_out)
 
