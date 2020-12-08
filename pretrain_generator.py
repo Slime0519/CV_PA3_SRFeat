@@ -101,7 +101,8 @@ if __name__ == "__main__":
             pretrain_loss = mseloss(fake_hr,hr_image)
 
             total_MSE_train += pretrain_loss
-            accum_psnr += 10 * torch.log10(1 / pretrain_loss)
+            temp_psnr = utils.get_psnr(fake_hr,hr_image)
+            accum_psnr += temp_psnr
 
             pretrain_loss.backward()
             gen_optimizer.step()
