@@ -63,9 +63,10 @@ if __name__ == "__main__":
     datasize = len(train_dataloader)
 
     start_epoch = 0
-
-    generator = nn.DataParallel(generator)
-    generator = generator.to(device)
+    
+ #   generator = generator.to(device)
+#    generator = nn.DataParallel(generator)
+    generator = generator.to('cuda')
 
     for epoch in range(start_epoch, TOTAL_EPOCHS):
         # prepare training
@@ -76,19 +77,21 @@ if __name__ == "__main__":
 
         print("----epoch {}/{}----".format(epoch + 1, TOTAL_EPOCHS))
         print("----training step----")
-        for input,target in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
+        for lr_image,hr_image in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
             # print("---batch {}---".format(i))
-            target_list = np.array(target)
-            input_list = np.array(input)
+            target_list = np.array(hr_image)
+            
+            input_list = np.array(lr_image)
 
-            input, target = input.to(device), target.to(device)
-
+            lr_image, hr_image = lr_image.to(device), hr_image.to(device)
+           # print(type(input))
+           # print(type(generator))
             gen_optimizer.zero_grad()
 
             # generate fake hr images
-            fake_hr = generator(input)
+            fake_hr = generator(lr_image)
 
-            pretrain_loss = mseloss(fake_hr,target)
+            pretrain_loss = mseloss(fake_hr,hr_image)
 
             total_MSE_train += pretrain_loss
             accum_psnr += 10 * torch.log10(1 / pretrain_loss)
