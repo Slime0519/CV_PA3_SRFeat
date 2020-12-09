@@ -165,14 +165,16 @@ if __name__ == "__main__":
 
             gen_total_loss.backward()
             gen_optimizer.step()
-            img_adversarial_loss.backward()
-            feat_adversarial_loss.backward()
+        
             temp_mse = mseloss(fake_hr,hr_image)
             total_PSNR_train += temp_mse.item()
             #print("epoch {} training step : {}/{}".format(epoch+1, i + 1, train_len))
 
             image_discriminator.requires_grad_(True)
             feat_discriminator.requires_grad_(True)
+            
+            img_adversarial_loss.backward()
+            feat_adversarial_loss.backward()
             temp_mse =None
             fake_hr =None
             torch.cuda.empty_cache()
