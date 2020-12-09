@@ -84,7 +84,7 @@ if __name__ == "__main__":
     image_discriminator = image_discriminator.to(device)
     feat_discriminator = feat_discriminator.to(device)
     truncat_vgg = truncat_vgg.to(device)
-
+    truncat_vgg.eval()
 
 
     for epoch in range(start_epoch,TOTAL_EPOCH):
@@ -126,26 +126,26 @@ if __name__ == "__main__":
             real_vgg_patch = truncat_vgg(hr_image)/12.75
            # print("patch size : {}".format(torch._shape_as_tensor(fake_vgg_patch)))
            # train image Discriminator
-            img_fake_crimed = image_discriminator(fake_hr)
-            img_real_crimed = image_discriminator(hr_image)
+            img_fake_crimed = image_discriminator(fake_hr.detach())
+            img_real_crimed = image_discriminator(hr_image.detach())
 
             fake_score = adversal_criterion(img_fake_crimed,torch.zeros_like(img_fake_crimed))
             target_score = adversal_criterion(img_real_crimed,torch.ones_like(img_real_crimed))
 
             img_adversarial_loss = fake_score+target_score
 
-            img_adversarial_loss.backward(retain_graph=True)
+            img_adversarial_loss.backward()
             imgdis_optimizer.step()
 
             #train feature Discriminator
-            feat_fake_crimed = feat_discriminator(fake_vgg_patch)
-            feat_real_crimed = feat_discriminator(real_vgg_patch)
+            feat_fake_crimed = feat_discriminator(fake_vgg_patch.detach())
+            feat_real_crimed = feat_discriminator(real_vgg_patch.detach())
 
             feat_fake_score = adversal_criterion(feat_fake_crimed,torch.zeros_like(feat_fake_crimed))
             feat_real_score = adversal_criterion(feat_real_crimed,torch.ones_like(feat_real_crimed))
 
             feat_adversarial_loss = feat_fake_score+feat_real_score
-            feat_adversarial_loss.backward(retain_graph=True)
+            feat_adversarial_loss.backward()
             featdis_optimizer.step()
 
             # train Generator
