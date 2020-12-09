@@ -67,6 +67,6 @@ class truncated_vgg(nn.Module):
 
 if __name__ == "__main__":
 
-    Test = vggloss().to('cuda:0')
+    Test = truncated_vgg().to('cuda:0')
 
-    summary(Test,(3,384,384))
+    summary(Test,(3,296,296))

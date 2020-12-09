@@ -50,8 +50,8 @@ if __name__ == "__main__":
     generator = utils.load_model(generator, filepath=PRETRAINED_MODELPATH, device=device)
     print("complete load model")
 
-    image_discriminator = Discriminator(imagesize = (296,296))
-    feat_discriminator = Discriminator(imagesize = (18,18))
+    image_discriminator = Discriminator(imagesize = (3,296,296))
+    feat_discriminator = Discriminator(imagesize = (512,18,18))
 
     gen_optimizer = optim.Adam(generator.parameters(),lr= lr) #lr = 1e-4
     imgdis_optimizer = optim.Adam(image_discriminator.parameters(),lr = lr)
