@@ -50,8 +50,8 @@ if __name__ == "__main__":
     generator = utils.load_model(generator, filepath=PRETRAINED_MODELPATH, device=device)
     print("complete load model")
 
-    image_discriminator = Discriminator(imagesize = (296,296))
-    feat_discriminator = Discriminator(imagesize = (18,18))
+    image_discriminator = Discriminator(imagesize = (3,296,296))
+    feat_discriminator = Discriminator(imagesize = (512,18,18))
 
     gen_optimizer = optim.Adam(generator.parameters(),lr= lr) #lr = 1e-4
     imgdis_optimizer = optim.Adam(image_discriminator.parameters(),lr = lr)
@@ -78,6 +78,7 @@ if __name__ == "__main__":
 
     generator = generator.to(device)
     image_discriminator = image_discriminator.to(device)
+    feat_discriminator = feat_discriminator.to(device)
     truncat_vgg = truncat_vgg.to(device)
 
 
@@ -116,7 +117,7 @@ if __name__ == "__main__":
            # generate vgg pathces
             fake_vgg_patch = truncat_vgg(fake_hr)/12.75
             real_vgg_patch = truncat_vgg(hr_image)/12.75
-
+           # print("patch size : {}".format(torch._shape_as_tensor(fake_vgg_patch)))
            # train image Discriminator
             img_fake_crimed = image_discriminator(fake_hr)
             img_real_crimed = image_discriminator(hr_image)
@@ -126,10 +127,12 @@ if __name__ == "__main__":
 
             img_adversarial_loss = fake_score+target_score
 
-            img_adversarial_loss.backward()
+            img_adversarial_loss.backward(retain_graph=True)
             imgdis_optimizer.step()
 
+            
             #train feature Discriminator
+            
             feat_fake_crimed = feat_discriminator(fake_vgg_patch)
             feat_real_crimed = feat_discriminator(real_vgg_patch)
 
@@ -141,14 +144,14 @@ if __name__ == "__main__":
             featdis_optimizer.step()
 
             # train Generator
-            imgdis_optimizer.requires_grad_(False)
-            featdis_optimizer.requires_grad_(False)
+            image_discriminator.requires_grad_(False)
+            feat_discriminator.requires_grad_(False)
 
             gen_image_crimed = image_discriminator(fake_hr)
-            gen_feat_crimed = feat_discriminator(fake_hr)
+            gen_feat_crimed = feat_discriminator(fake_vgg_patch)
 
             gen_img_score = adversal_criterion(gen_image_crimed,torch.ones_like(gen_image_crimed))
-            gen_feat_score = adversal_criterion(gen_feat_score,torch.ones_like(gen_feat_score))
+            gen_feat_score = adversal_criterion(gen_feat_crimed,torch.ones_like(gen_feat_crimed))
             perceptual_loss = mseloss(fake_vgg_patch,real_vgg_patch)
             #common_loss = mseloss(fake_hr,hr_image)
 
