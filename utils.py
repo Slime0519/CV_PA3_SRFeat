@@ -18,8 +18,22 @@ def get_psnr(img1, img2, min_value=0, max_value=1):
     return 10 * torch.log10((PIXEL_MAX ** 2) / mse)
 
 def load_model(model,filepath,device):
-    model.load_state_dict(torch.load(filepath))
+    state_dict = torch.load(filepath)
+    #print(state_dict.keys())
+    new_state_dict= {}
+    oldkeys = state_dict.copy().keys()
+
+    #eliminate prefix module. concated by using nn.Dataparallel function
+    for key in oldkeys:
+        prefix_loc = key.find('module.')
+        if prefix_loc == 0:
+            newkey = key.replace("module.","",1)
+            new_state_dict[newkey] = state_dict.pop(key)
+            # print("detect target key : {}".format(key))
+            #print("new key : {}".format(newkey))
+    model.load_state_dict(new_state_dict)
     model.to(device)
+
     return model
 
 def remove_small_images(datasetpath, minimum=296):

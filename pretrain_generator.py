@@ -104,7 +104,7 @@ if __name__ == "__main__":
             total_MSE_train += pretrain_loss
             #temp_psnr = utils.get_psnr(fake_hr,hr_image)
             accum_psnr += 10 * torch.log10(1/pretrain_loss)
-            #accum_psnr += temp_psnr
+            #accum_psnr += temp_psnr    #demand too much gpu memory
 
             pretrain_loss.backward()
             gen_optimizer.step()
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         print("average PSNR : {} | MSE : {}".format(PSNR_train[epoch],Train_Gen_loss[epoch]))
 
         #if (epoch +1) %10 ==0:
-        torch.save(generator.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
+        torch.save(generator.module.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
         np.save("result_data/pretrain/PSNR_{}_to_{}.npy".format(start_epoch,epoch),PSNR_train)
         np.save("result_data/pretrain/Train_Gen_loss_{}_to_{}.npy".format(start_epoch,epoch),Train_Gen_loss)
     #   Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)

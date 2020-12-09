@@ -46,7 +46,7 @@ class Pretrain_Dataset_Train(Dataset):
         return len(self.imagelist)
 
 class Dataset_Train(Dataset):
-    def __init__(self, hr_dirpath, lr_dirpath, upscale_factor = 4, extension = '.png'):
+    def __init__(self, hr_dirpath, lr_dirpath, extension = '.png'):
         super(Dataset_Train, self).__init__()
         self.hr_imagelist = glob.glob(os.path.join(hr_dirpath,"*"+extension))
         self.lr_imagelist = glob.glob(os.path.join(lr_dirpath,"*"+extension))
@@ -76,6 +76,7 @@ class Dataset_Vaild(Dataset):
         image = np.array(image)
         height, width = image.shape[0], image.shape[1]
         self.crop_size = min(height,width) - (min(height,width) % self.upscale_factor)
+        self.crop_size = (self.crop_size//4)*4
         self.hr_transform = hr_transform(self.crop_size)
         self.lr_transform = lr_transform(self.crop_size, self.upscale_factor)
 

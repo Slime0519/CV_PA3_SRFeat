@@ -102,15 +102,21 @@ class Discriminator(nn.Module):
         out_block3 = self.Sigmoid(out_block3)
 
         return out_block3
+"""
+class WrapperModel(nn.Module):
+	def __init__(self):
+		super(WrapperModel, self).__init__()
+		self.module = Model() # that I actually define.
+	def forward(self, x):
+		return self.module(x)
+"""
 
-
-
-if __name__ == "__main__":
-    TestGenerator = Generator().to('cuda:0')
-    summary(TestGenerator,(3,96,96))
-    TestDiscriminator = Discriminator().to('cuda:0')
-    summary(TestDiscriminator,(3,384,384))
-
+#if __name__ == "__main__":
+   #  TestGenerator = Generator().to('cuda:0')
+   # summary(TestGenerator,(3,96,96))
+   # TestDiscriminator = Discriminator().to('cuda:0')
+   # summary(TestDiscriminator,(3,384,384))
+#
 
 
 
