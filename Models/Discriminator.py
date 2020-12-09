@@ -4,6 +4,7 @@ from Models.common import ConvBlock_Discriminator
 from torchsummary import summary
 import torch
 
+
 class Discriminator(nn.Module):
     def __init__(self, imagesize, initial_channel = 64 ):
         super(Discriminator, self).__init__()

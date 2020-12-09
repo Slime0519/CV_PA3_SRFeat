@@ -1,18 +1,22 @@
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+from torch.autograd import Variable
 import torch.optim as optim
 import torch.nn as nn
+
 
 import Dataset_gen
 import argparse
 import os
 import utils
 import tqdm
+import gc
 
 from Models.Generator_128 import Generator
 from Models.Discriminator import Discriminator
 from Models.Truncated_vgg import truncated_vgg
+from pynvml.smi import nvidia_smi
 
 parser = argparse.ArgumentParser(description="SRFeat Training Module")
 parser.add_argument('--num_epochs', type = int, default=5, help="train epoch")
@@ -82,6 +86,7 @@ if __name__ == "__main__":
     truncat_vgg = truncat_vgg.to(device)
 
 
+
     for epoch in range(start_epoch,TOTAL_EPOCH):
         # prepare training
         generator.train()
@@ -98,15 +103,17 @@ if __name__ == "__main__":
         for lr_image, hr_image in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
         #for i, (input, hr_image) in enumerate(train_dataloader):
            # print("---batch {}---".format(i))
-            target_list = np.array(hr_image)
-            input_list = np.array(lr_image)
+            #target_list = np.array(hr_image)
+            #input_list = np.array(lr_image)
             """
             for i, target_image in enumerate(target_list):
                 print("target {} : {}".format(i,np.array(target_image).shape))
             for i,input_image in enumerate(input):
                 print("input {}: {}".format(i,np.array(input_image).shape))
             """
-            lr_image, hr_image = lr_image.to(device), hr_image.to(device)
+            #lr_image, hr_image = lr_image.to(device), hr_image.to(device)
+            lr_image = Variable(lr_image.to(device), volatile=True)
+            hr_image = Variable(hr_image.to(device),volatile = True)
 
             imgdis_optimizer.zero_grad()
             gen_optimizer.zero_grad()
@@ -130,9 +137,7 @@ if __name__ == "__main__":
             img_adversarial_loss.backward(retain_graph=True)
             imgdis_optimizer.step()
 
-            
             #train feature Discriminator
-            
             feat_fake_crimed = feat_discriminator(fake_vgg_patch)
             feat_real_crimed = feat_discriminator(real_vgg_patch)
 
@@ -160,12 +165,18 @@ if __name__ == "__main__":
 
             gen_total_loss.backward()
             gen_optimizer.step()
-
-            total_PSNR_train += mseloss(fake_hr,hr_image)
+            img_adversarial_loss.backward()
+            feat_adversarial_loss.backward()
+            temp_mse = mseloss(fake_hr,hr_image)
+            total_PSNR_train += temp_mse.item()
             #print("epoch {} training step : {}/{}".format(epoch+1, i + 1, train_len))
 
             image_discriminator.requires_grad_(True)
             feat_discriminator.requires_grad_(True)
+            temp_mse =None
+            fake_hr =None
+            torch.cuda.empty_cache()
+            gc.collect()
 
         scheduler1.step()
         scheduler2.step()
