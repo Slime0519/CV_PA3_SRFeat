@@ -17,7 +17,7 @@ from Models.Truncated_vgg import truncated_vgg
 parser = argparse.ArgumentParser(description="SRFeat Training Module")
 parser.add_argument('--num_epochs', type = int, default=5, help="train epoch")
 
-BATCH_SIZE = 9
+BATCH_SIZE = 5
 CROP_SIZE = 296
 UPSCALE_FACTOR = 4
 DIRPATH_TRAINDATA = "DIV_train_cropped"
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     train_dataset = Dataset_gen.Dataset_Train(hr_dirpath=DIRPATH_TRAINDATA_HR,lr_dirpath=DIRPATH_TRAINDATA_LR)
 
-    train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+    train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8)
 
     generator = Generator()
     #generator = nn.DataParallel(generator)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
             feat_real_score = adversal_criterion(feat_real_crimed,torch.ones_like(feat_real_crimed))
 
             feat_adversarial_loss = feat_fake_score+feat_real_score
-            feat_adversarial_loss.backward()
+            feat_adversarial_loss.backward(retain_graph=True)
             featdis_optimizer.step()
 
             # train Generator
@@ -164,8 +164,8 @@ if __name__ == "__main__":
             total_PSNR_train += mseloss(fake_hr,hr_image)
             #print("epoch {} training step : {}/{}".format(epoch+1, i + 1, train_len))
 
-            imgdis_optimizer.requires_grad_(True)
-            featdis_optimizer.requires_grad_(True)
+            image_discriminator.requires_grad_(True)
+            feat_discriminator.requires_grad_(True)
 
         scheduler1.step()
         scheduler2.step()
