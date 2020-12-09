@@ -9,9 +9,8 @@ class Discriminator(nn.Module):
         ConvBlock_list.append(nn.Conv2d(in_channels=3,out_channels=initial_channel,kernel_size=3,padding=1))
         ConvBlock_list.append(nn.LeakyReLU(negative_slope=0.2,inplace=True))
 
-        ConvBlock_list.append(ConvBlock_Discriminator(in_channel=initial_channel, stride=2))
+        ConvBlock_list.append(ConvBlock_Discriminator(in_channel=initial_channel,stride=2))
 
-        channel = initial_channel*2
         for i in range(3):
             ConvBlock_list.append(ConvBlock_Discriminator(in_channel=channel, stride=1))
             ConvBlock_list.append(ConvBlock_Discriminator(in_channel = channel, stride=2))
