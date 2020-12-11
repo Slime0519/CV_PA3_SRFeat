@@ -129,4 +129,8 @@ dmypy.json
 .pyre/
 .idea
 *.zip
+COCO
 DIV2K_train_HR
+DIV_train_cropped
+Dataset
+Trained_model
