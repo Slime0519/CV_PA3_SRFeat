@@ -1,22 +1,14 @@
-import numpy as np
-import torch
-from torch.utils.data import DataLoader
-from torch.autograd import Variable
+import torch, tqdm, argparse, os, gc
+import Dataset_gen, utils
+
 import torch.optim as optim
 import torch.nn as nn
+import numpy as np
 
-
-import Dataset_gen
-import argparse
-import os
-import utils
-import tqdm
-import gc
-
+from torch.utils.data import DataLoader
 from Models.Generator_128 import Generator
 from Models.Discriminator import Discriminator
 from Models.Truncated_vgg import truncated_vgg
-from pynvml.smi import nvidia_smi
 
 parser = argparse.ArgumentParser(description="SRFeat Training Module")
 parser.add_argument('--num_epochs', type = int, default=5, help="train epoch")
@@ -45,17 +37,22 @@ if __name__ == "__main__":
     DIRPATH_TRAINDATA_LR = os.path.join(DIRPATH_TRAINDATA,"LR_bicubic")
 
     train_dataset = Dataset_gen.Dataset_Train(hr_dirpath=DIRPATH_TRAINDATA_HR,lr_dirpath=DIRPATH_TRAINDATA_LR)
-
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
     generator = Generator()
-    #generator = nn.DataParallel(generator)
+    image_discriminator = Discriminator(imagesize=(3, 296, 296))
+    feat_discriminator = Discriminator(imagesize=(512, 18, 18))
+    truncat_vgg = truncated_vgg()  # vgg(5,4) loss
+
     PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN, "generator_19th_model.pth")
     generator = utils.load_model(generator, filepath=PRETRAINED_MODELPATH, device=device)
     print("complete load model")
 
-    image_discriminator = Discriminator(imagesize = (3,296,296))
-    feat_discriminator = Discriminator(imagesize = (512,18,18))
+    generator = nn.DataParallel(generator).to(device)
+    image_discriminator = nn.DataParallel(image_discriminator).to(device)
+    feat_discriminator = nn.DataParallel(feat_discriminator).to(device)
+    truncat_vgg = nn.DataParallel(truncat_vgg).to(device)
+    truncat_vgg.eval()
 
     gen_optimizer = optim.Adam(generator.parameters(),lr= lr) #lr = 1e-4
     imgdis_optimizer = optim.Adam(image_discriminator.parameters(),lr = lr)
@@ -64,7 +61,6 @@ if __name__ == "__main__":
     scheduler1 = optim.lr_scheduler.MultiStepLR(gen_optimizer,milestones=[3,5], gamma=0.1)
     scheduler2 = optim.lr_scheduler.MultiStepLR(imgdis_optimizer,milestones=[3,5], gamma=0.1)
     scheduler3 = optim.lr_scheduler.MultiStepLR(featdis_optimizer,milestones=[3,5], gamma=0.1)
-    truncat_vgg = truncated_vgg()  # vgg(5,4) loss
 
     mseloss = nn.MSELoss()
     adversal_criterion = nn.BCEWithLogitsLoss()
@@ -75,21 +71,6 @@ if __name__ == "__main__":
     train_len = len(train_dataloader)
 
     start_epoch = 0
-
-    generator = nn.DataParallel(generator)
-    image_discriminator = nn.DataParallel(image_discriminator)
-    feat_discriminator = nn.DataParallel(feat_discriminator)
-    truncat_vgg = nn.DataParallel(truncat_vgg)
-
-    generator = generator.to(device)
-    image_discriminator = image_discriminator.to(device)
-    feat_discriminator = feat_discriminator.to(device)
-    truncat_vgg = truncat_vgg.to(device)
-    truncat_vgg.eval()
-    epoch =0
-    torch.save(generator.module.state_dict(), "Trained_model/post_Generator/generator_{}th_model.pth".format(epoch))
-    torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
-    torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
 
     for epoch in range(start_epoch,TOTAL_EPOCH):
         # prepare training
@@ -105,17 +86,7 @@ if __name__ == "__main__":
         print("----epoch {}/{}----".format(epoch+1, TOTAL_EPOCH))
         print("----training step----")
         for lr_image, hr_image in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
-        #for i, (input, hr_image) in enumerate(train_dataloader):
-           # print("---batch {}---".format(i))
-            #target_list = np.array(hr_image)
-            #input_list = np.array(lr_image)
-            """
-            for i, target_image in enumerate(target_list):
-                print("target {} : {}".format(i,np.array(target_image).shape))
-            for i,input_image in enumerate(input):
-                print("input {}: {}".format(i,np.array(input_image).shape))
-            """
-            #lr_image, hr_image = lr_image.to(device), hr_image.to(device)
+
             lr_image = lr_image.to(device)
             hr_image = hr_image.to(device)
 
@@ -125,10 +96,11 @@ if __name__ == "__main__":
 
             #generate fake hr images
             fake_hr = generator(lr_image)
+
            # generate vgg pathces
             fake_vgg_patch = truncat_vgg(fake_hr)/12.75
             real_vgg_patch = truncat_vgg(hr_image)/12.75
-           # print("patch size : {}".format(torch._shape_as_tensor(fake_vgg_patch)))
+
            # train image Discriminator
             img_fake_crimed = image_discriminator(fake_hr.detach())
             img_real_crimed = image_discriminator(hr_image)
@@ -162,7 +134,6 @@ if __name__ == "__main__":
             gen_img_score = adversal_criterion(gen_image_crimed,torch.ones_like(gen_image_crimed))
             gen_feat_score = adversal_criterion(gen_feat_crimed,torch.ones_like(gen_feat_crimed))
             perceptual_loss = mseloss(fake_vgg_patch,real_vgg_patch)
-            #common_loss = mseloss(fake_hr,hr_image)
 
             gen_total_loss = perceptual_loss + 1e-3*(gen_img_score+gen_feat_score)
             Train_Gen_loss[epoch] += gen_total_loss
@@ -172,12 +143,10 @@ if __name__ == "__main__":
         
             temp_mse = mseloss(fake_hr,hr_image)
             total_PSNR_train += temp_mse.item()
-            #print("epoch {} training step : {}/{}".format(epoch+1, i + 1, train_len))
 
             image_discriminator.requires_grad_(True)
             feat_discriminator.requires_grad_(True)
-            
-            
+
             temp_mse =None
             fake_hr =None
             torch.cuda.empty_cache()
@@ -190,15 +159,9 @@ if __name__ == "__main__":
         Train_Gen_loss[epoch] /= train_len
         PSNR_train[epoch] = total_PSNR_train/train_len
         print("train PSNR in epoch {} : {}".format(epoch+1,PSNR_train[epoch]))
-     #   Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)
-     #   Train_Dis_loss[epoch] = Dis_loss_total / len(train_dataloader)
-     #   PSNR_train[epoch] = total_PSNR_train / len(train_dataloader)
-     #   print("train PSNR : {}".format(total_PSNR_train / len(train_dataloader)))
 
         np.save("result_data/Generator/Train_Gen_loss.npy",Train_Gen_loss)
-        #np.save("result_data/Discriminator/Train_Dis_loss.npy", Train_Dis_loss)
         np.save("result_data/PSNR_train.npy",PSNR_train)
-        #np.save("result_data/PSNR_eval.npy",PSNR_eval)
     
         torch.save(generator.module.state_dict(), "Trained_model/post_Generator/generator_{}th_model.pth".format(epoch))
         torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/feat_discriminator_{}th_model.pth".format(epoch))

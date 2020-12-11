@@ -1,7 +1,4 @@
-import os
-import glob
-import re
-import torch
+import os, glob, torch
 import numpy as np
 
 from PIL import Image
@@ -17,9 +14,8 @@ def get_psnr(img1, img2, min_value=0, max_value=1):
     PIXEL_MAX = max_value - min_value
     return 10 * torch.log10((PIXEL_MAX ** 2) / mse)
 
-def load_model(model,filepath,device):
+def load_model(model,filepath):
     state_dict = torch.load(filepath)
-    #print(state_dict.keys())
     new_state_dict= {}
     oldkeys = state_dict.copy().keys()
 
@@ -32,7 +28,6 @@ def load_model(model,filepath,device):
             # print("detect target key : {}".format(key))
             #print("new key : {}".format(newkey))
     model.load_state_dict(new_state_dict)
-    #model.to(device)
 
     return model
 
@@ -64,6 +59,20 @@ def remove_small_images(datasetpath, minimum=296):
 
     print("number of small images : {}".format(len(removelist)))
     print("ratio of removed images : {}/{} = {}".format(len(removelist),len(imagelist),len(removelist)/float(len(imagelist))))
+
+def specify_generator_path(Basedir, version,epoch):
+    if version == 'pretrain':
+        gen_path = os.path.join(Basedir,"Generator","generator_{}th_model.pth".format(epoch-1))
+    else:
+        gen_path = os.path.join(Basedir,"post_Generator","generator_{}th_model.pth".format(epoch-1))
+    return gen_path
+
+def specify_dataset_path(Basedir,setname):
+    datasetpath_list = glob.glob(os.path.join(Basedir, "*"))
+    index =[i for i, path in enumerate(datasetpath_list) if path.split('/')[-1] == setname]
+    return datasetpath_list[index]
+
+
 
 
 
