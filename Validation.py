@@ -68,6 +68,7 @@ if __name__ == "__main__":
 
             # generate fake hr images
             fake_hr = generator(lr_image)
+            print("value range : {} to {}".format(torch.min(fake_hr),torch.max(fake_hr)))
             accum_psnr += psnr(fake_hr, hr_image)
             # accum_psnr += 10 * torch.log10(1 / pretrain_loss)
         validation_PSNR = accum_psnr/len(valid_dataloader)
