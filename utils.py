@@ -3,17 +3,6 @@ import numpy as np
 
 from PIL import Image
 
-def get_psnr(img1, img2, min_value=0, max_value=1):
-
-    if type(img1) == torch.Tensor:
-        mse = torch.mean((img1 - img2) ** 2)
-    else:
-        mse = np.mean((img1 - img2) ** 2)
-    if mse == 0:
-        return 100
-    PIXEL_MAX = max_value - min_value
-    return 10 * torch.log10((PIXEL_MAX ** 2) / mse)
-
 def load_model(model,filepath):
     state_dict = torch.load(filepath)
     new_state_dict= {}
@@ -25,8 +14,6 @@ def load_model(model,filepath):
         if prefix_loc == 0:
             newkey = key.replace("module.","",1)
             new_state_dict[newkey] = state_dict.pop(key)
-            # print("detect target key : {}".format(key))
-            #print("new key : {}".format(newkey))
     model.load_state_dict(new_state_dict)
 
     return model
@@ -43,11 +30,6 @@ def remove_small_images(datasetpath, minimum=296):
         imagepath = os.path.join(Dataset_PATH,imagename)
         image = Image.open(imagepath)
         imagesize = np.array(image).shape
-        #print("investigate {}th images".format(i+1))
-        #if i+1 %(length//10) ==0:
-        #    print("investigate {}th images : {}%, number of small images : {}".format(i+1,float(i)/length,))
-        #if (imagesize[2]==1):
-        #    removelist.append(imagepath)
         
         if (imagesize[0] <minimum) or (imagesize[1]<minimum):
             removelist.append(imagepath)

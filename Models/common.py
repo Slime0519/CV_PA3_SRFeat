@@ -1,7 +1,4 @@
 import torch.nn as nn
-import numpy as np
-import torch
-from torchsummary import summary #pip install torchsummary
 
 #BN 을 빼고서도 실험해보자.
 class Residual_block(nn.Module):
@@ -54,22 +51,5 @@ class ConvBlock_Discriminator(nn.Module):
         out = self.LeakyReLU(out)
 
         return out
-
-"""
-class WrapperModel(nn.Module):
-	def __init__(self):
-		super(WrapperModel, self).__init__()
-		self.module = Model() # that I actually define.
-	def forward(self, x):
-		return self.module(x)
-"""
-
-#if __name__ == "__main__":
-   #  TestGenerator = Generator().to('cuda:0')
-   # summary(TestGenerator,(3,96,96))
-   # TestDiscriminator = Discriminator().to('cuda:0')
-   # summary(TestDiscriminator,(3,384,384))
-#
-
 
 

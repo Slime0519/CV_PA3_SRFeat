@@ -1,29 +1,10 @@
-import torchvision.transforms as torch_transform
-import torch
+import os, glob
 import numpy as np
-import os
-import glob
+import matplotlib.pyplot as plt
+import torchvision.transforms as torch_transform
+
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
-import matplotlib.pyplot as plt
-import cv2
-
-def hr_transform(crop_size = 296):
-    transform = torch_transform.Compose([
-        torch_transform.ToTensor(),
-        torch_transform.ToPILImage(),
-        torch_transform.CenterCrop(crop_size),
-        torch_transform.ToTensor()
-    ])
-    return transform
-
-def lr_transform(crop_size = 296, upscale_factor = 4):
-    transform = torch_transform.Compose([
-        torch_transform.ToPILImage(),
-        torch_transform.Resize(int(crop_size//upscale_factor),interpolation=Image.BICUBIC),
-        torch_transform.ToTensor()
-    ])
-    return transform
 
 class Dataset_Pretrain(Dataset):
     def __init__(self, dirpath, crop_size = 296, upscale_factor = 4, extension = '.jpg'):
@@ -103,6 +84,22 @@ class Dataset_Test(Dataset):
     def __len__(self):
         return len(self.imagelist)
 
+def hr_transform(crop_size = 296):
+    transform = torch_transform.Compose([
+        torch_transform.ToTensor(),
+        torch_transform.ToPILImage(),
+        torch_transform.CenterCrop(crop_size),
+        torch_transform.ToTensor()
+    ])
+    return transform
+
+def lr_transform(crop_size = 296, upscale_factor = 4):
+    transform = torch_transform.Compose([
+        torch_transform.ToPILImage(),
+        torch_transform.Resize(int(crop_size//upscale_factor),interpolation=Image.BICUBIC),
+        torch_transform.ToTensor()
+    ])
+    return transform
 
 if __name__ == "__main__":
     dirpath_train = "Dataset/Train"

@@ -1,23 +1,16 @@
+import torch, argparse, os, tqdm
+
 import numpy as np
-import torch
-from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn as nn
-
 import Dataset_gen
-import tqdm
 
-
-import argparse
-import os
-import utils
-
+from torch.utils.data import DataLoader
 from Models.Generator_128 import Generator
 
 parser = argparse.ArgumentParser(description="SRFeat Training Module")
 parser.add_argument('--pre_trained', type=int, default=0, help="path of pretrained models")
 parser.add_argument('--num_epochs', type=int, default=20, help="train epoch")
-
 
 BATCH_SIZE = 9
 CROP_SIZE = 296
@@ -26,7 +19,6 @@ DIRPATH_TRAIN = "Dataset/train/COCO/train2017"
 DIRPATH_PRETRAIN = "Trained_model/Generator"
 
 TOTAL_EPOCHS = 20
-grad_clip = None
 lr = 1e-4
 
 if torch.cuda.is_available():
@@ -41,12 +33,10 @@ if __name__ == "__main__":
     PRETRAINED_EPOCH = opt.pre_trained
     TOTAL_EPOCHS = opt.num_epochs
 
-
     loss_array_Train = np.zeros(TOTAL_EPOCHS)
     PSNR_array_Train = np.zeros(TOTAL_EPOCHS)
     PSNR_array_Vaild = np.zeros(TOTAL_EPOCHS)
 
-#    utils.remove_small_images(DIRPATH_PRETRAIN,minimum=296)
     train_dataset = Dataset_gen.Dataset_Pretrain(dirpath=DIRPATH_TRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, pin_memory= True)
 
@@ -62,7 +52,6 @@ if __name__ == "__main__":
     datasize = len(train_dataloader)
 
     PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN,"generator_{}th_model.pth".format(PRETRAINED_EPOCH-1))
- #   generator = utils.load_model(generator, filepath = PRETRAINED_MODELPATH)
     generator = nn.DataParallel(generator)
     generator = generator.to(device)
 
@@ -84,16 +73,12 @@ if __name__ == "__main__":
         accum_psnr = 0
 
         print("----epoch {}/{}----".format(epoch + 1, TOTAL_EPOCHS))
-        #print("----training step----")
         for lr_image,hr_image in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
-            # print("---batch {}---".format(i))
             target_list = np.array(hr_image)
             
             input_list = np.array(lr_image)
 
             lr_image, hr_image = lr_image.to(device), hr_image.to(device)
-           # print(type(input))
-           # print(type(generator))
             gen_optimizer.zero_grad()
 
             # generate fake hr images
@@ -102,7 +87,6 @@ if __name__ == "__main__":
             pretrain_loss = mseloss(fake_hr,hr_image)
 
             total_MSE_train += pretrain_loss
-            #temp_psnr = utils.get_psnr(fake_hr,hr_image)
             accum_psnr += 10 * torch.log10(1/pretrain_loss)
             #accum_psnr += temp_psnr    #demand too much gpu memory
 
@@ -117,11 +101,6 @@ if __name__ == "__main__":
 
         print("average PSNR : {} | MSE : {}".format(PSNR_train[epoch],Train_Gen_loss[epoch]))
 
-        #if (epoch +1) %10 ==0:
         torch.save(generator.module.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
         np.save("result_data/pretrain/PSNR_{}_to_{}.npy".format(start_epoch,epoch),PSNR_train)
         np.save("result_data/pretrain/Train_Gen_loss_{}_to_{}.npy".format(start_epoch,epoch),Train_Gen_loss)
-    #   Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)
-    #   Train_Dis_loss[epoch] = Dis_loss_total / len(train_dataloader)
-    #   PSNR_train[epoch] = total_PSNR_train / len(train_dataloader)
-    #   print("train PSNR : {}".format(total_PSNR_train / len(train_dataloader)))
