@@ -55,7 +55,7 @@ if __name__ == "__main__":
     validation_PSNR =0
     PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN, "generator_4th_model.pth")
     generator = utils.load_model(generator, filepath = PRETRAINED_MODELPATH,device =device)
-    #generator = nn.DataParallel(generator)
+    #generator = nn.DataParallel(generator
     generator = generator.to(device)
 
     accum_psnr = 0
