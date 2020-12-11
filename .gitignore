@@ -130,3 +130,7 @@ dmypy.json
 .idea
 *.zip
 DIV2K_train_HR
+Trained_model
+Set5
+Set14
+result_data

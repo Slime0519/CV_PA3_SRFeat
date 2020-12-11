@@ -19,7 +19,7 @@ else:
 if __name__ == "__main__":
 
     train_dataset = Dataset_gen.Dataset_Train(dirpath=DIRPATH_TRAIN, crop_size=96, upscale_factor=UPSCALE_FACTOR)
-   # vaild_dataset = Dataset_gen.Dataset_Vaild(dirpath=DIRPATH_VAILD, upscale_factor=UPSCALE_FACTOR)
+   # vaild_dataset = Dataset_gen.Dataset_Validation(dirpath=DIRPATH_VAILD, upscale_factor=UPSCALE_FACTOR)
 
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=1, shuffle=False)
 

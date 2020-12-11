@@ -60,7 +60,7 @@ if __name__ == "__main__":
     model_epoch = 300
 
     gen_model = Model.Generator()
-    Test_Dataset = Dataset_gen.Dataset_Vaild(dirpath=os.path.join(testset_dirpath, testset_name))
+    Test_Dataset = Dataset_gen.Dataset_Validation(dirpath=os.path.join(testset_dirpath, testset_name))
     Test_Dataloader = DataLoader(dataset=Test_Dataset, shuffle=True, batch_size=1, num_workers=0)
 
     gen_model.load_state_dict(

@@ -10,6 +10,7 @@ import cv2
 
 def hr_transform(crop_size = 296):
     transform = torch_transform.Compose([
+        torch_transform.ToTensor(),
         torch_transform.ToPILImage(),
         torch_transform.CenterCrop(crop_size),
         torch_transform.ToTensor()
@@ -24,9 +25,9 @@ def lr_transform(crop_size = 296, upscale_factor = 4):
     ])
     return transform
 
-class Pretrain_Dataset_Train(Dataset):
+class Dataset_Pretrain(Dataset):
     def __init__(self, dirpath, crop_size = 296, upscale_factor = 4, extension = '.jpg'):
-        super(Pretrain_Dataset_Train, self).__init__()
+        super(Dataset_Pretrain, self).__init__()
         self.imagelist = glob.glob(os.path.join(dirpath,"*"+extension))
       # self.cropsize = crop_size - (crop_size%upscale_factor)
         self.cropsize = crop_size
@@ -35,7 +36,7 @@ class Pretrain_Dataset_Train(Dataset):
 
     def __getitem__(self, index):
         image = Image.open(self.imagelist[index]).convert("RGB")
-        image = np.array(image)
+      #  image = np.array(image)
 
         hr_image = self.hr_transform(image)
         lr_image = self.lr_transform(hr_image)
@@ -65,18 +66,16 @@ class Dataset_Train(Dataset):
     def __len__(self):
         return len(self.hr_imagelist)
 
-class Dataset_Vaild(Dataset):
-    def __init__(self, dirpath, upscale_factor = 4):
-        super(Dataset_Vaild, self).__init__()
+class Dataset_Validation(Dataset):
+    def __init__(self, dirpath, crop_size = 296, upscale_factor = 4):
+        super(Dataset_Validation, self).__init__()
         self.upscale_factor = upscale_factor
-        self.imagelist = glob.glob(os.path.join(dirpath,"*.jpg"))
+        self.crop_size = crop_size
+        self.imagelist = glob.glob(os.path.join(dirpath,"*"))
 
     def __getitem__(self, index):
         image = Image.open(self.imagelist[index])
-        image = np.array(image)
-        height, width = image.shape[0], image.shape[1]
-        self.crop_size = min(height,width) - (min(height,width) % self.upscale_factor)
-        self.crop_size = (self.crop_size//4)*4
+        #image = np.array(image)
         self.hr_transform = hr_transform(self.crop_size)
         self.lr_transform = lr_transform(self.crop_size, self.upscale_factor)
 
@@ -124,7 +123,7 @@ if __name__ == "__main__":
     dirpath_train = "Dataset/Train"
     dirpath_vaild = "Dataset/Vaild"
     Test_Traindataset = Dataset_Train(dirpath= dirpath_train, crop_size= 96, upscale_factor= 4)
-    Test_Vailddataset = Dataset_Vaild(dirpath= dirpath_vaild, upscale_factor=4)
+    Test_Vailddataset = Dataset_Validation(dirpath= dirpath_vaild, upscale_factor=4)
 
     Test_TraindataLoader = DataLoader(dataset=Test_Traindataset, batch_size=16, shuffle=True)
     Test_VailddataLoader = DataLoader(dataset=Test_Vailddataset, batch_size=1)
