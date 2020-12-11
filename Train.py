@@ -24,7 +24,7 @@ parser.add_argument('--num_epochs', type = int, default=5, help="train epoch")
 BATCH_SIZE = 5
 CROP_SIZE = 296
 UPSCALE_FACTOR = 4
-DIRPATH_TRAINDATA = "DIV_train_cropped"
+DIRPATH_TRAINDATA = "Dataset/train/DIV_train_cropped"
 DIRPATH_PRETRAIN = "Trained_model/Generator"
 TOTAL_EPOCH = 5
 grad_clip = None

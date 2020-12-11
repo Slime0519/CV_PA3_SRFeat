@@ -22,7 +22,7 @@ parser.add_argument('--num_epochs', type=int, default=20, help="train epoch")
 BATCH_SIZE = 9
 CROP_SIZE = 296
 UPSCALE_FACTOR = 4
-DIRPATH_TRAIN = "COCO/train2017"
+DIRPATH_TRAIN = "Dataset/train/COCO/train2017"
 DIRPATH_PRETRAIN = "Trained_model/Generator"
 
 TOTAL_EPOCHS = 20
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     PSNR_array_Vaild = np.zeros(TOTAL_EPOCHS)
 
 #    utils.remove_small_images(DIRPATH_PRETRAIN,minimum=296)
-    train_dataset = Dataset_gen.Pretrain_Dataset_Train(dirpath=DIRPATH_TRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
+    train_dataset = Dataset_gen.Dataset_Pretrain(dirpath=DIRPATH_TRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, pin_memory= True)
 
     generator = Generator()
