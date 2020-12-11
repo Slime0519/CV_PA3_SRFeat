@@ -15,7 +15,7 @@ import glob
 from Models.Generator_128 import Generator
 from piq import psnr
 
-parser = argparse.ArgumentParser(description="SRFeat Training Module")
+parser = argparse.ArgumentParser(description="SRFeat Validation Module")
 parser.add_argument('--pre_trained', type=int, default=0, help="path of pretrained models")
 
 BATCH_SIZE = 9
