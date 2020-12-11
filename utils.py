@@ -32,7 +32,7 @@ def load_model(model,filepath,device):
             # print("detect target key : {}".format(key))
             #print("new key : {}".format(newkey))
     model.load_state_dict(new_state_dict)
-    model.to(device)
+    #model.to(device)
 
     return model
 

@@ -95,7 +95,7 @@ class Dataset_Test(Dataset):
         self.imagelist = glob.glob(os.path.join(dirpath, "*"))
         self.transform = torch_transform.ToTensor()
     def __getitem__(self, index):
-        image = Image.open(self.imagelist[index])
+        image = Image.open(self.imagelist[index]).convert("RGB")
         image = self.transform(image)
 
         return image
