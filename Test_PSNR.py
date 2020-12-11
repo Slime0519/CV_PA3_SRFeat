@@ -11,7 +11,7 @@ import os
 import cv2
 from PIL import Image
 from skimage.measure import compare_psnr, compare_ssim
-from Test import regularization_image
+
 
 savedir = "Result_image"
 

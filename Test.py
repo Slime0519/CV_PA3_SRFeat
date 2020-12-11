@@ -1,133 +1,82 @@
-import torch
-import torch.nn as nn
-import torch.utils as utils
-import Model
-import Dataset_gen
-from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
-import matplotlib.image as pltimage
 import numpy as np
-import os
-import cv2
-from PIL import Image
+import torch
+from torch.utils.data import DataLoader
+from torchvision.utils import save_image
+import torch.optim as optim
+import torch.nn as nn
 
-savedir = "Result_image"
+import Dataset_gen
+import tqdm
+
+import argparse
+import os
+import utils
+import glob
+
+from Models.Generator_128 import Generator
+from piq import psnr
+
+parser = argparse.ArgumentParser(description="SRFeat Validation Module")
+parser.add_argument('--pre_trained', type=int, default=0, help="path of pretrained models")
+
+BATCH_SIZE = 9
+CROP_SIZE = 296
+UPSCALE_FACTOR = 4
+DIRPATH_Test = "Dataset/valid"
+DIRPATH_PRETRAIN = "Trained_model/Generator"
+DIRPATH_TESTIMAGE = "Test_result"
+TOTAL_EPOCHS = 20
+grad_clip = None
+lr = 1e-4
 
 if torch.cuda.is_available():
-    device = torch.device("cuda")
+    device = torch.device("cuda:0")
 else:
-    device = torch.device("cpu")
-
-def regularization_image(image):
-    min = np.min(image)
-    temp_image = image-min
-
-    max = np.max(temp_image)
-    temp_image = temp_image/max
-
-    return temp_image
-
-
-
-def compare_image(bicubic_image,srfeat_image,epoch, save = False, num =0):
-    fig = plt.figure()
-    rows = 1
-    columns = 2
-    fig.suptitle("epoch {}".format(epoch))
-    bicubic_grid = fig.add_subplot(rows, columns, 1)
-    bicubic_grid.imshow(bicubic_image)
-    bicubic_grid.set_title("bicubic interpolation")
-    bicubic_grid.axis("off")
-
-    srfeat_grid= fig.add_subplot(rows, columns, 2)
-    srfeat_grid.imshow(srfeat_image)
-    srfeat_grid.set_title("SRGAN")
-    srfeat_grid.axis("off")
-
-    if save:
-        plt.savefig(os.path.join(savedir,"compare","epoch_{}".format(epoch),"image_{}".format(num)),dpi=500)
-    else:
-        plt.show()
-
+    device = torch.device("cpu:0")
 
 if __name__ == "__main__":
-    testset_dirpath = "Dataset/Test"
-    testset_name = "BSDS300"
 
-    result_dirpath = "result_data"
+    opt = parser.parse_args()
 
-    model_dirpath = "Trained_model"
-    model_epoch = 300
+    PRETRAINED_EPOCH = opt.pre_trained
 
+    #    utils.remove_small_images(DIRPATH_PRETRAIN,minimum=296)
+    datasetpath_list = glob.glob(os.path.join(DIRPATH_Test,"*"))
 
-    
-    gen_model = Model.Generator()
-    Test_Dataset = Dataset_gen.Dataset_Test(dirpath=os.path.join(testset_dirpath,testset_name))
-    Test_Dataloader = DataLoader(dataset=Test_Dataset, shuffle=True, batch_size=1, num_workers=0)
+    test_dataloaderlist = []
+    datasetname_list = []
+    for datasetpath in datasetpath_list:
+        temp_test_dataset = Dataset_gen.Dataset_Test(dirpath=datasetpath)
+        temp_test_dataloader = DataLoader(dataset=temp_test_dataset, batch_size=1, shuffle=False, num_workers=0)
+        test_dataloaderlist.append(temp_test_dataloader)
 
-    gen_model.load_state_dict(torch.load(os.path.join(model_dirpath,"Generator","generator_{}th_model.pth".format(model_epoch-1))))
-    gen_model = gen_model.to(device)
-    gen_model.eval()
-
-    for i,(input,_) in enumerate(Test_Dataloader):
-       # if not i == 33:
-        #    continue
-        input = input.to(device)
-        output = gen_model(input)
-        output_image = np.array(output.cpu().detach())
-        output_image = output_image.squeeze()
-        output_image = np.transpose(output_image,(1,2,0))
-        regularized_output_image = regularization_image(output_image)
-        regularized_output_image = (regularized_output_image*255).astype(np.uint8)
-
-        input_temp = np.array(input.cpu().detach())
-        input_bicubic = cv2.resize(np.transpose(np.squeeze(input_temp), (1, 2, 0)), dsize=(0, 0), fx=4, fy=4,
-                                   interpolation=cv2.INTER_CUBIC)
-        regularized_input_image = regularization_image(input_bicubic)
-        regularized_input_image = (regularized_input_image * 255).astype(np.uint8)
-
-        #PNG Image 저장
-      #  PIL_Input_Image = Image.fromarray(regularized_input_image).convert('RGB')
-        #PIL_Input_Image.save("Result_image/bicubic/epoch{}_image{}.png".format(model_epoch,i))
-      #  PIL_Input_Image.save("Result_image/bicubic/epoch{}_image18.png".format(model_epoch)) #save large size image
-
-       # PIL_output_Image = Image.fromarray(regularized_output_image).convert('RGB')
-        #PIL_output_Image.save("Result_image/srfeat/epoch{}_image{}.png".format(model_epoch, i))
-      #  PIL_output_Image.save("Result_image/srfeat/epoch{}_image18.png".format(model_epoch))
-
-      #  compare_image(bicubic_image=regularized_input_image, srfeat_image=regularized_output_image, epoch=model_epoch,
-       #               save=True, num=i+1)
-      #  if i % 10 == 0:
-        #    compare_image(bicubic_image=regularized_input_image,srfeat_image=regularized_output_image,epoch=model_epoch,save = False)
-            #pltimage.imsave(os.path.join(savedir,"my_{}th_image.jpg".format(i)),regularized_output_image)
-
-    PSNR_eval = np.load(os.path.join(result_dirpath,"PSNR_eval.npy"))
-    PSNR_Train = np.load(os.path.join(result_dirpath,"PSNR_train.npy"))
-    Train_Dis_loss = np.load(os.path.join(result_dirpath,"Train_Dis_loss.npy"))
-    Train_Gen_loss = np.load(os.path.join(result_dirpath,"Train_Gen_loss.npy"))
-
-    Num_Epoch = len(PSNR_eval)
-    x= range(Num_Epoch)
-    y_eval = PSNR_eval
-    y_train = PSNR_Train
-    plt.plot(x,y_train)
-    plt.plot(x,y_eval)
-    plt.ylim(20,26)
-    plt.legend(['train PSNR', 'evaluation PSNR'])
-    plt.title("average PSNR at train and evaluation step")
-    plt.savefig("result_data/average_PSNR.png")
-    #plt.show()
-
-    dis_loss = Train_Dis_loss
-    gen_loss = Train_Gen_loss
+        datasetname = datasetpath.split('/')[-1]
+        datasetname_list.append(datasetname)
 
 
-    plt.plot(x,dis_loss)
-    plt.plot(x,gen_loss)
-    plt.legend(['target image', 'generated image'])
-    plt.title("average adversarial loss of images at training step")
-    plt.savefig("result_data/average_loss.png")
-   # plt.show()
+    generator = Generator()
 
 
+    PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN, "generator_4th_model.pth")
+    generator = utils.load_model(generator, filepath = PRETRAINED_MODELPATH,device =device)
+    #generator = nn.DataParallel(generator)
+    generator = generator.to(device)
 
+    generator.eval()
+
+    for i,test_dataloader in enumerate(test_dataloaderlist):
+        print("validate about dataset {}".format(datasetname_list[i]))
+        imagenum = 0
+        for lr_image in tqdm.tqdm(test_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
+            # print("---batch {}---".format(i))
+            lr_image = lr_image.to(device)
+
+            # generate fake hr images
+            fake_hr = generator(lr_image)
+            temp_fake = torch.clamp(fake_hr, min=0, max=1)
+
+            saveimage = temp_fake[0]
+            save_image(saveimage,os.path.join(DIRPATH_TESTIMAGE,datasetname_list[i],"image{}.png".format(imagenum)))
+            imagenum +=1
+
+       # print("average PSNR about dataset {}: {}".format(datasetname_list[i],validation_PSNR))

@@ -89,31 +89,16 @@ class Dataset_Validation(Dataset):
         return len(self.imagelist)
 
 class Dataset_Test(Dataset):
-    def __init__(self, dirpath, downscaling_factor = None):
+    def __init__(self, dirpath):
         super(Dataset_Test, self).__init__()
        # self.upscale_factor = upscale_factor
-        self.imagelist = glob.glob(os.path.join(dirpath, "*.jpg"))
-        self.downsampling_factor = downscaling_factor
-        self.transform = torch_transform.Compose([
-            torch_transform.ToPILImage(),
-            torch_transform.RandomCrop(128),
-            torch_transform.ToTensor()
-        ])
+        self.imagelist = glob.glob(os.path.join(dirpath, "*"))
+        self.transform = torch_transform.ToTensor()
     def __getitem__(self, index):
         image = Image.open(self.imagelist[index])
-        image = np.array(image)
-        original_image = image.copy()
-        if not self.downsampling_factor == None:
-            margin = np.array(image.shape[:2])%self.downsampling_factor
-            image = image[:image.shape[0]-margin[0],:image.shape[1]-margin[1],:]
-            original_image = image.copy()
-            image = cv2.resize(image, dsize=(0, 0), fx=1/self.downsampling_factor, fy=1/self.downsampling_factor, interpolation=cv2.INTER_CUBIC)
-    #    print("Test : image size {}".format(image.shape))
-  #      image = np.transpose(image,(2,0,1))
-        #image = torch.from_numpy(image)
         image = self.transform(image)
 
-        return image, original_image
+        return image
 
     def __len__(self):
         return len(self.imagelist)
