@@ -74,7 +74,7 @@ class Dataset_Validation(Dataset):
         self.imagelist = glob.glob(os.path.join(dirpath,"*"))
 
     def __getitem__(self, index):
-        image = Image.open(self.imagelist[index])
+        image = Image.open(self.imagelist[index]).convert("RGB")
         #image = np.array(image)
         self.hr_transform = hr_transform(self.crop_size)
         self.lr_transform = lr_transform(self.crop_size, self.upscale_factor)

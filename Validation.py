@@ -11,6 +11,7 @@ import argparse
 import os
 import utils
 import glob
+import gc
 
 from Models.Generator_128 import Generator
 from piq import psnr
@@ -56,22 +57,33 @@ if __name__ == "__main__":
     PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN, "generator_4th_model.pth")
     generator = utils.load_model(generator, filepath = PRETRAINED_MODELPATH,device =device)
     #generator = nn.DataParallel(generator
-    generator = generator.to(device)
+    generator = generator.to('cpu')
 
     accum_psnr = 0
     generator.eval()
     for i,valid_dataloader in enumerate(valid_dataloaderlist):
         print("validate about dataset {}".format(datasetlist[i]))
+    
         for lr_image, hr_image in tqdm.tqdm(valid_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
             # print("---batch {}---".format(i))
-            lr_image, hr_image = lr_image.to(device), hr_image.to(device)
+            #lr_image, hr_image = lr_image.to(device), hr_image.to(device)
 
             # generate fake hr images
             fake_hr = generator(lr_image)
-            print("value range : {} to {}".format(torch.min(fake_hr),torch.max(fake_hr)))
-            accum_psnr += psnr(fake_hr, hr_image)
+            #print("value range : {} to {}".format(torch.min(fake_hr),torch.max(fake_hr)))
+            temp_fake = torch.clamp(fake_hr, min=0,max = 1)
+            accum_psnr += psnr(temp_fake, hr_image)
+            temp_mse =None
+            temp_fake =None
+            fake_hr =None
+            torch.cuda.empty_cache()
+            gc.collect()
             # accum_psnr += 10 * torch.log10(1 / pretrain_loss)
         validation_PSNR = accum_psnr/len(valid_dataloader)
+        temp_mse =None
+        torch.cuda.empty_cache()
+        gc.collect()
+
         print("average PSNR about dataset {}: {}".format(datasetlist[i],validation_PSNR))
 
     #   Train_Gen_loss[epoch] = Gen_loss_total / len(train_dataloader)
