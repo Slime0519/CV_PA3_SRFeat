@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     train_dataset = Dataset_gen.Dataset_Train(hr_dirpath=DIRPATH_TRAINDATA_HR,lr_dirpath=DIRPATH_TRAINDATA_LR)
 
-    train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8)
+    train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
     generator = Generator()
     #generator = nn.DataParallel(generator)
@@ -78,6 +78,7 @@ if __name__ == "__main__":
 
     generator = nn.DataParallel(generator)
     image_discriminator = nn.DataParallel(image_discriminator)
+    feat_discriminator = nn.DataParallel(feat_discriminator)
     truncat_vgg = nn.DataParallel(truncat_vgg)
 
     generator = generator.to(device)
@@ -85,7 +86,10 @@ if __name__ == "__main__":
     feat_discriminator = feat_discriminator.to(device)
     truncat_vgg = truncat_vgg.to(device)
     truncat_vgg.eval()
-
+    epoch =0
+    torch.save(generator.module.state_dict(), "Trained_model/post_Generator/generator_{}th_model.pth".format(epoch))
+    torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
+    torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
 
     for epoch in range(start_epoch,TOTAL_EPOCH):
         # prepare training
@@ -112,8 +116,8 @@ if __name__ == "__main__":
                 print("input {}: {}".format(i,np.array(input_image).shape))
             """
             #lr_image, hr_image = lr_image.to(device), hr_image.to(device)
-            lr_image = Variable(lr_image.to(device), volatile=True)
-            hr_image = Variable(hr_image.to(device),volatile = True)
+            lr_image = lr_image.to(device)
+            hr_image = hr_image.to(device)
 
             imgdis_optimizer.zero_grad()
             gen_optimizer.zero_grad()
@@ -127,13 +131,13 @@ if __name__ == "__main__":
            # print("patch size : {}".format(torch._shape_as_tensor(fake_vgg_patch)))
            # train image Discriminator
             img_fake_crimed = image_discriminator(fake_hr.detach())
-            img_real_crimed = image_discriminator(hr_image.detach())
+            img_real_crimed = image_discriminator(hr_image)
 
             fake_score = adversal_criterion(img_fake_crimed,torch.zeros_like(img_fake_crimed))
             target_score = adversal_criterion(img_real_crimed,torch.ones_like(img_real_crimed))
 
             img_adversarial_loss = fake_score+target_score
-
+           
             img_adversarial_loss.backward()
             imgdis_optimizer.step()
 
@@ -173,8 +177,7 @@ if __name__ == "__main__":
             image_discriminator.requires_grad_(True)
             feat_discriminator.requires_grad_(True)
             
-            img_adversarial_loss.backward()
-            feat_adversarial_loss.backward()
+            
             temp_mse =None
             fake_hr =None
             torch.cuda.empty_cache()
@@ -198,6 +201,6 @@ if __name__ == "__main__":
         #np.save("result_data/PSNR_eval.npy",PSNR_eval)
     
         torch.save(generator.module.state_dict(), "Trained_model/post_Generator/generator_{}th_model.pth".format(epoch))
-        torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
-        torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/discriminator_{}th_model.pth".format(epoch))
+        torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/feat_discriminator_{}th_model.pth".format(epoch))
+        torch.save( image_discriminator.module.state_dict(), "Trained_model/Discriminator/image_discriminator_{}th_model.pth".format(epoch))
 
