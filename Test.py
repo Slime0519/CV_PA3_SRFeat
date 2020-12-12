@@ -11,7 +11,7 @@ parser.add_argument('--pre_trained_epoch', type=int, default=0, help="epoch of t
 parser.add_argument('--dataset_name', type = str, default='BSD100', help = "name of dataset for test")
 
 UPSCALE_FACTOR = 4
-DIRPATH_Test = "Dataset/valid"
+DIRPATH_TEST = "Dataset/valid"
 DIRPATH_TRAINED = "Trained_model"
 DIRPATH_TESTIMAGE = "Test_result"
 
@@ -29,15 +29,15 @@ if __name__ == "__main__":
     dataset_name = opt.dataset_name
 
     pretrained_modelpath = utils.specify_generator_path(DIRPATH_TRAINED,testver,pretrained_epoch)
-    datasetpath = utils.specify_dataset_path(DIRPATH_TESTIMAGE, dataset_name)
+    datasetpath = utils.specify_dataset_path(DIRPATH_TEST, dataset_name)
 
     test_dataset = Dataset_gen.Dataset_Test(dirpath=datasetpath)
     test_dataloader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False, num_workers=0)
 
 
     generator = Generator()
-    generator = utils.load_model(generator, filepath = pretrained_modelpath,device =device)
-    generator = generator.to('cpu')
+    generator = utils.load_model(generator, filepath = pretrained_modelpath)
+    generator = generator.to(device)
 
     generator.eval()
 
@@ -46,9 +46,10 @@ if __name__ == "__main__":
     print("upscale image about dataset {}".format(dataset_name))
     for lr_image in tqdm.tqdm(test_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
         # generate fake hr images
+        lr_image = lr_image.to(device)
         fake_hr = generator(lr_image)
         fake_hr = torch.clamp(fake_hr, min=0, max=1)
 
         fake_hr = fake_hr[0]
-        save_image(fake_hr,os.path.join(DIRPATH_TESTIMAGE,testver+dataset_name, "image{}.png".format(imagenum)))
+        save_image(fake_hr,os.path.join(DIRPATH_TESTIMAGE, testver+"_"+dataset_name, "image{}.png".format(imagenum)))
         imagenum += 1

@@ -38,7 +38,7 @@ if __name__ == "__main__":
     generator = Generator()
 
     validation_PSNR =0
-    generator = utils.load_model(generator, filepath = pretrained_modelpath,device =device)
+    generator = utils.load_model(generator, filepath = pretrained_modelpath)
     generator = generator.to(device)
 
     accum_psnr = 0

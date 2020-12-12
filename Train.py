@@ -45,7 +45,7 @@ if __name__ == "__main__":
     truncat_vgg = truncated_vgg()  # vgg(5,4) loss
 
     PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN, "generator_19th_model.pth")
-    generator = utils.load_model(generator, filepath=PRETRAINED_MODELPATH, device=device)
+    generator = utils.load_model(generator, filepath=PRETRAINED_MODELPATH)
     print("complete load model")
 
     generator = nn.DataParallel(generator).to(device)
