@@ -5,9 +5,11 @@ import torch.optim as optim
 import torch.nn as nn
 import Dataset_gen
 
+from piq import psnr
 from torch.utils.data import DataLoader
 from Models.Generator_128 import Generator
 from Models.NotBN_Generator_128 import NotBN_Generator
+
 
 parser = argparse.ArgumentParser(description="SRFeat Training Module")
 parser.add_argument('--pre_trained', type=int, default=0, help="path of pretrained models")
@@ -17,7 +19,7 @@ BATCH_SIZE = 9
 CROP_SIZE = 296
 UPSCALE_FACTOR = 4
 DIRPATH_TRAIN = "Dataset/train/COCO/train2017"
-DIRPATH_PRETRAIN = "Trained_model/Generator"
+DIRPATH_PRETRAIN = "Trained_model/NotBN_Generator"
 
 
 TOTAL_EPOCHS = 20
@@ -66,7 +68,7 @@ if __name__ == "__main__":
             scheduler.step()
 
     state_dict= {}
-    np.save("result_data/pretrain/test.npy",PSNR_train)
+    np.save("result_data/NotBN_pretrain/test.npy",PSNR_train)
 
     for epoch in range(start_epoch, TOTAL_EPOCHS):
         # prepare training
@@ -90,7 +92,7 @@ if __name__ == "__main__":
             pretrain_loss = mseloss(fake_hr,hr_image)
 
             total_MSE_train += pretrain_loss
-            accum_psnr += 10 * torch.log10(1/pretrain_loss)
+            accum_psnr += psnr(fake_hr,hr_image)
             #accum_psnr += temp_psnr    #demand too much gpu memory
 
             pretrain_loss.backward()
@@ -106,5 +108,5 @@ if __name__ == "__main__":
         print("average PSNR : {} | MSE : {}".format(PSNR_train[epoch],Train_Gen_loss[epoch]))
 
         torch.save(generator.module.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
-        np.save("result_data/pretrain/PSNR_{}_to_{}.npy".format(start_epoch,epoch),PSNR_train)
-        np.save("result_data/pretrain/Train_Gen_loss_{}_to_{}.npy".format(start_epoch,epoch),Train_Gen_loss)
+        np.save("result_data/NotBN_pretrain/PSNR_{}_to_{}.npy".format(start_epoch,epoch),PSNR_train)
+        np.save("result_data/NotBN_pretrain/Train_Gen_loss_{}_to_{}.npy".format(start_epoch,epoch),Train_Gen_loss)
