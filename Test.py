@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 
 parser = argparse.ArgumentParser(description="SRFeat Test Module")
-parser.add_argument('--generator_version', type = str, default='post', help="specify version of generator wherther 'pretrain' or 'final'")
+parser.add_argument('--generator_version', type = str, default='post', help="specify version of generator wherther 'pretrain' or 'post'")
 parser.add_argument('--pre_trained_epoch', type=int, default=0, help="epoch of trained model")
 parser.add_argument('--dataset_name', type = str, default='BSD100', help = "name of dataset for test")
 
@@ -50,5 +50,5 @@ if __name__ == "__main__":
         fake_hr = torch.clamp(fake_hr, min=0, max=1)
 
         fake_hr = fake_hr[0]
-        save_image(fake_hr,os.path.join(DIRPATH_TESTIMAGE, dataset_name, "image{}.png".format(imagenum)))
+        save_image(fake_hr,os.path.join(DIRPATH_TESTIMAGE,testver+dataset_name, "image{}.png".format(imagenum)))
         imagenum += 1
