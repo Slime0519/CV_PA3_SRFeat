@@ -36,8 +36,11 @@ if __name__ == "__main__":
 
 
     generator = Generator()
-    generator = utils.load_model(generator, filepath = pretrained_modelpath)
-    generator = generator.to(device)
+    if testver == "pretrain":
+        generator = utils.load_model(generator, filepath = pretrained_modelpath)
+    else:
+        generator.load_state_dict(torch.load(pretrained_modelpath))
+   # generator = generator.to(device)
 
     generator.eval()
 
@@ -46,7 +49,7 @@ if __name__ == "__main__":
     print("upscale image about dataset {}".format(dataset_name))
     for lr_image in tqdm.tqdm(test_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
         # generate fake hr images
-        lr_image = lr_image.to(device)
+        #lr_image = lr_image.to(device)
         fake_hr = generator(lr_image)
         fake_hr = torch.clamp(fake_hr, min=0, max=1)
 
