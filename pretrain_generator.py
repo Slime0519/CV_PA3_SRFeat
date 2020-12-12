@@ -7,6 +7,7 @@ import Dataset_gen
 
 from torch.utils.data import DataLoader
 from Models.Generator_128 import Generator
+from Models.NotBN_Generator_128 import NotBN_Generator
 
 parser = argparse.ArgumentParser(description="SRFeat Training Module")
 parser.add_argument('--pre_trained', type=int, default=0, help="path of pretrained models")
@@ -17,6 +18,7 @@ CROP_SIZE = 296
 UPSCALE_FACTOR = 4
 DIRPATH_TRAIN = "Dataset/train/COCO/train2017"
 DIRPATH_PRETRAIN = "Trained_model/Generator"
+
 
 TOTAL_EPOCHS = 20
 lr = 1e-4
@@ -40,10 +42,11 @@ if __name__ == "__main__":
     train_dataset = Dataset_gen.Dataset_Pretrain(dirpath=DIRPATH_TRAIN, crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, pin_memory= True)
 
-    generator = Generator()
+    #generator = Generator()
+    generator= NotBN_Generator()
     gen_optimizer = optim.Adam(generator.parameters(), lr=lr)  # lr = 1e-4
-    #scheduler = optim.lr_scheduler.CosineAnnealingLR(gen_optimizer, T_max = TOTAL_EPOCHS//2, eta_min=1e-6)
-    scheduler = optim.lr_scheduler.MultiStepLR(gen_optimizer, milestones=[10, 15], gamma=0.1)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(gen_optimizer, T_max = 16,  eta_min=1e-6)
+    #scheduler = optim.lr_scheduler.MultiStepLR(gen_optimizer, milestones=[10, 15], gamma=0.1)
 
     mseloss = nn.MSELoss()
 
@@ -93,8 +96,9 @@ if __name__ == "__main__":
             pretrain_loss.backward()
             gen_optimizer.step()
 
-
-        scheduler.step()
+        #For cosineannealing scheduler
+        if epoch<=15:
+            scheduler.step()
 
         PSNR_train[epoch] = accum_psnr/datasize
         Train_Gen_loss[epoch] = total_MSE_train/datasize

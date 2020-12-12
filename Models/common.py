@@ -20,6 +20,21 @@ class Residual_block(nn.Module):
         out = out+x
         return out
 
+class NotBN_Residual_block(nn.Module):
+    def __init__(self, channel = 128):
+        super(Residual_block, self).__init__()
+        self.Conv1 = nn.Conv2d(in_channels=channel,out_channels=channel,kernel_size=3,padding=1)
+        self.Conv2 = nn.Conv2d(in_channels=channel,out_channels=channel,kernel_size=3,padding=1)
+
+        self.LeakyReLU1 = nn.LeakyReLU(negative_slope=0.2)
+
+    def forward(self,x):
+        out = self.Conv1(x)
+        out = self.LeakyReLU1(out)
+        out = self.Conv2(out)
+        out = out+x
+        return out
+
 class Pixelsuffler_block(nn.Module):
     def __init__(self,in_channels):
         super(Pixelsuffler_block, self).__init__()
