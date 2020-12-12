@@ -51,7 +51,13 @@ def specify_generator_path(Basedir, version,epoch):
 
 def specify_dataset_path(Basedir,setname):
     datasetpath_list = glob.glob(os.path.join(Basedir, "*"))
-    index =[i for i, path in enumerate(datasetpath_list) if path.split('/')[-1] == setname]
+    #print("setname : {}".format(setname))
+    index = None
+    for i, path in enumerate(datasetpath_list): 
+        #print(path)
+        if path.split('/')[-1] == setname:
+            index = i
+    
     return datasetpath_list[index]
 
 
