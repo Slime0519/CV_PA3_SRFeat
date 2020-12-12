@@ -34,11 +34,15 @@ if __name__ == "__main__":
                                                         upscale_factor=UPSCALE_FACTOR)
     valid_dataloader = DataLoader(dataset=valid_dataset, batch_size=4, shuffle=False, num_workers=2,
                                        pin_memory=True)
-
+#    print(pretrained_modelpath)
     generator = Generator()
 
     validation_PSNR =0
-    generator = utils.load_model(generator, filepath = pretrained_modelpath)
+   
+    if generator_ver == "pretrain":
+        generator = utils.load_model(generator, filepath = pretrained_modelpath)
+    else:
+        generator.load_state_dict(torch.load(pretrained_modelpath),strict=True)
     generator = generator.to(device)
 
     accum_psnr = 0
