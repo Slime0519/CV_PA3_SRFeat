@@ -1,4 +1,4 @@
-import torch, argparse, os, tqdm
+import torch, argparse, os, tqdm,gc
 
 import numpy as np
 import torch.optim as optim
@@ -79,10 +79,6 @@ if __name__ == "__main__":
 
         print("----epoch {}/{}----".format(epoch + 1, TOTAL_EPOCHS))
         for lr_image,hr_image in tqdm.tqdm(train_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
-            target_list = np.array(hr_image)
-            
-            input_list = np.array(lr_image)
-
             lr_image, hr_image = lr_image.to(device), hr_image.to(device)
             gen_optimizer.zero_grad()
 
@@ -97,6 +93,12 @@ if __name__ == "__main__":
 
             pretrain_loss.backward()
             gen_optimizer.step()
+            temp_mse = None
+            fake_hr = None
+            lr_image = None
+            hr_image =None
+            torch.cuda.empty_cache()
+            gc.collect()
 
         #For cosineannealing scheduler
         if epoch<=15:
@@ -107,6 +109,6 @@ if __name__ == "__main__":
 
         print("average PSNR : {} | MSE : {}".format(PSNR_train[epoch],Train_Gen_loss[epoch]))
 
-        torch.save(generator.module.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
+        torch.save(generator.module.state_dict(), "Trained_model/NotBN_Generator/generator_{}th_model.pth".format(epoch))
         np.save("result_data/NotBN_pretrain/PSNR_{}_to_{}.npy".format(start_epoch,epoch),PSNR_train)
         np.save("result_data/NotBN_pretrain/Train_Gen_loss_{}_to_{}.npy".format(start_epoch,epoch),Train_Gen_loss)
