@@ -18,6 +18,7 @@ BATCH_SIZE = 5
 CROP_SIZE = 296
 UPSCALE_FACTOR = 4
 DIRPATH_TRAINDATA = "Dataset/train/DIV_train_cropped"
+#DIRPATH_PRETRAIN = "Trained_model/Generator"
 DIRPATH_PRETRAIN = "Trained_model/NotBN_Generator"
 TOTAL_EPOCH = 5
 grad_clip = None
