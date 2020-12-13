@@ -88,19 +88,19 @@ if __name__ == "__main__":
             pretrain_loss = mseloss(fake_hr,hr_image)
 
             total_MSE_train += pretrain_loss
-            clamped_lr =torch.clamp(fake_hr,min=0,max=1)
-            accum_psnr += psnr(clamped_lr,hr_image)
+            #clamped_lr =torch.clamp(fake_hr,min=0,max=1)
+            accum_psnr += 10*torch.log10(1/pretrain_loss)
             #accum_psnr += temp_psnr    #demand too much gpu memory
 
             pretrain_loss.backward()
             gen_optimizer.step()
-            temp_mse = None
-            fake_hr = None
-            lr_image = None
-            hr_image =None
-            clamped_lr = None
-            torch.cuda.empty_cache()
-            gc.collect()
+            #temp_mse = None
+            #fake_hr = None
+            #lr_image = None
+            #hr_image =None
+            #clamped_lr = None
+            #torch.cuda.empty_cache()
+            #gc.collect()
 
         #For cosineannealing scheduler
         if epoch<=15:

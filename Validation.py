@@ -3,7 +3,9 @@ import Dataset_gen, utils
 
 from torch.utils.data import DataLoader
 from Models.Generator_128 import Generator
+from Models.NotBN_Generator_128 import NotBN_Generator
 from piq import psnr
+
 
 parser = argparse.ArgumentParser(description="SRFeat Validation Module")
 parser.add_argument('--generator_version', type = str, default='post', help="specify version of generator wherther 'pretrain' or 'final'")
@@ -36,6 +38,8 @@ if __name__ == "__main__":
                                        pin_memory=True)
 #    print(pretrained_modelpath)
     generator = Generator()
+    if generator_ver == "NotBN_pretrain":
+        generator = NotBN_Generator()
 
     validation_PSNR =0
    
