@@ -92,7 +92,7 @@ if __name__ == "__main__":
             pretrain_loss = mseloss(fake_hr,hr_image)
 
             total_MSE_train += pretrain_loss
-            accum_psnr += psnr(fake_hr,hr_image)
+            accum_psnr += psnr(torch.clamp(fake_hr,min=0,max=1),hr_image)
             #accum_psnr += temp_psnr    #demand too much gpu memory
 
             pretrain_loss.backward()
@@ -107,6 +107,6 @@ if __name__ == "__main__":
 
         print("average PSNR : {} | MSE : {}".format(PSNR_train[epoch],Train_Gen_loss[epoch]))
 
-        torch.save(generator.module.state_dict(), "Trained_model/Generator/generator_{}th_model.pth".format(epoch))
+        torch.save(generator.module.state_dict(), "Trained_model/NotBN_Generator/generator_{}th_model.pth".format(epoch))
         np.save("result_data/NotBN_pretrain/PSNR_{}_to_{}.npy".format(start_epoch,epoch),PSNR_train)
         np.save("result_data/NotBN_pretrain/Train_Gen_loss_{}_to_{}.npy".format(start_epoch,epoch),Train_Gen_loss)
