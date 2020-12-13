@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from Models.Generator_128 import Generator
 from Models.Discriminator import Discriminator
 from Models.Truncated_vgg import truncated_vgg
+from Models.NotBN_Generator_128 import NotBN_Generator
 
 parser = argparse.ArgumentParser(description="SRFeat Training Module")
 parser.add_argument('--num_epochs', type = int, default=5, help="train epoch")
@@ -17,7 +18,7 @@ BATCH_SIZE = 5
 CROP_SIZE = 296
 UPSCALE_FACTOR = 4
 DIRPATH_TRAINDATA = "Dataset/train/DIV_train_cropped"
-DIRPATH_PRETRAIN = "Trained_model/Generator"
+DIRPATH_PRETRAIN = "Trained_model/NotBN_Generator"
 TOTAL_EPOCH = 5
 grad_clip = None
 lr = 1e-4
@@ -39,7 +40,8 @@ if __name__ == "__main__":
     train_dataset = Dataset_gen.Dataset_Train(hr_dirpath=DIRPATH_TRAINDATA_HR,lr_dirpath=DIRPATH_TRAINDATA_LR)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
-    generator = Generator()
+    #generator = Generator()
+    generator = NotBN_Generator()
     image_discriminator = Discriminator(imagesize=(3, 296, 296))
     feat_discriminator = Discriminator(imagesize=(512, 18, 18))
     truncat_vgg = truncated_vgg()  # vgg(5,4) loss
@@ -160,10 +162,10 @@ if __name__ == "__main__":
         PSNR_train[epoch] = total_PSNR_train/train_len
         print("train PSNR in epoch {} : {}".format(epoch+1,PSNR_train[epoch]))
 
-        np.save("result_data/Generator/Train_Gen_loss.npy",Train_Gen_loss)
-        np.save("result_data/PSNR_train.npy",PSNR_train)
+        np.save("result_data/Generator/NotBN_Train_Gen_loss.npy",Train_Gen_loss)
+        np.save("result_data/NotBN_PSNR_train.npy",PSNR_train)
     
-        torch.save(generator.module.state_dict(), "Trained_model/post_Generator/generator_{}th_model.pth".format(epoch))
-        torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/feat_discriminator_{}th_model.pth".format(epoch))
-        torch.save( image_discriminator.module.state_dict(), "Trained_model/Discriminator/image_discriminator_{}th_model.pth".format(epoch))
+        torch.save(generator.module.state_dict(), "Trained_model/post_Generator/NotBN_generator_{}th_model.pth".format(epoch))
+        torch.save(feat_discriminator.module.state_dict(), "Trained_model/Discriminator/NotBN_feat_discriminator_{}th_model.pth".format(epoch))
+        torch.save( image_discriminator.module.state_dict(), "Trained_model/Discriminator/NotBN_image_discriminator_{}th_model.pth".format(epoch))
 
