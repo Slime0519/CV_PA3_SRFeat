@@ -88,7 +88,7 @@ if __name__ == "__main__":
             pretrain_loss = mseloss(fake_hr,hr_image)
 
             total_MSE_train += pretrain_loss
-            accum_psnr += psnr(fake_hr,hr_image)
+            accum_psnr += psnr(torch.clamp(fake_hr,min=0,max=1),hr_image)
             #accum_psnr += temp_psnr    #demand too much gpu memory
 
             pretrain_loss.backward()
