@@ -1,11 +1,11 @@
-import torch, tqdm, argparse, gc
+import torch, tqdm, argparse, os
 import Dataset_gen, utils
 
 from torch.utils.data import DataLoader
 from Models.Generator_128 import Generator
 from Models.NotBN_Generator_128 import NotBN_Generator
+from torchvision.utils import save_image
 from piq import psnr
-
 
 parser = argparse.ArgumentParser(description="SRFeat Validation Module")
 parser.add_argument('--generator_version', type = str, default='post', help="specify version of generator wherther 'pretrain' or 'final'")
@@ -16,6 +16,7 @@ CROP_SIZE = 296
 UPSCALE_FACTOR = 4
 DIRPATH_Validation = "Dataset/valid"
 DIRPATH_TRAINED = "Trained_model"
+DIRPATH_SAVEIMAGE= "Valid_result/"
 
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
@@ -31,11 +32,17 @@ if __name__ == "__main__":
 
     pretrained_modelpath = utils.specify_generator_path(DIRPATH_TRAINED, generator_ver, pretrained_epoch)
     datasetpath = utils.specify_dataset_path(DIRPATH_Validation, dataset_name)
+    savefolderpath = os.path.join(DIRPATH_SAVEIMAGE, generator_ver + "_" + dataset_name)
+
+    if not os.path.exists(savefolderpath):
+        os.mkdir(savefolderpath)
 
     valid_dataset = Dataset_gen.Dataset_Validation(dirpath=datasetpath, crop_size=CROP_SIZE,
                                                         upscale_factor=UPSCALE_FACTOR)
     valid_dataloader = DataLoader(dataset=valid_dataset, batch_size=4, shuffle=False, num_workers=2,
                                        pin_memory=True)
+
+
 #    print(pretrained_modelpath)
     generator = Generator()
     if generator_ver == "NotBN_pretrain" or generator_ver == "NotBN":
@@ -53,7 +60,7 @@ if __name__ == "__main__":
     generator.eval()
     print("validate about dataset {}".format(dataset_name))
 
-    for lr_image, hr_image in tqdm.tqdm(valid_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
+    for i,(lr_image, hr_image) in enumerate(tqdm.tqdm(valid_dataloader, bar_format="{l_bar}{bar:40}{r_bar}")):
 
         lr_image, hr_image = lr_image.to(device), hr_image.to(device)
 
@@ -65,8 +72,8 @@ if __name__ == "__main__":
         temp_mse = None
         temp_fake = None
         fake_hr = None
-        torch.cuda.empty_cache()
-        gc.collect()
+
+        save_image(temp_fake,  os.path.join(savefolderpath, "image{}.png".format(i)))
 
     validation_PSNR = accum_psnr / len(valid_dataloader)
     print("average PSNR about dataset {}: {}".format(dataset_name, validation_PSNR))
