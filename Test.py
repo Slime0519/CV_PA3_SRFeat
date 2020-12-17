@@ -45,17 +45,18 @@ if __name__ == "__main__":
     savefolderpath = os.path.join(DIRPATH_TESTIMAGE, testver + "_" + dataset_name)
     if testpatch:
         savefolderpath = savefolderpath +"_patch"
+        print(savefolderpath)
     if not os.path.exists(savefolderpath):
         os.mkdir(savefolderpath)
 
-    generator = Generator()
+    generator = Generator().to(device)
     if testver == "pretrain":
         generator = utils.load_model(generator, filepath = pretrained_modelpath)
     else:
         generator.load_state_dict(torch.load(pretrained_modelpath))
    # generator = generator.to(device)
 
-    truncat_vgg= truncated_vgg()
+    truncat_vgg= truncated_vgg().to(device)
 
     generator.eval()
 
@@ -64,15 +65,25 @@ if __name__ == "__main__":
     print("upscale image about dataset {}".format(dataset_name))
     for lr_image,hr_image in tqdm.tqdm(test_dataloader, bar_format="{l_bar}{bar:40}{r_bar}"):
         # generate fake hr images
-        #lr_image = lr_image.to(device)
+
+        lr_image = lr_image.to(device)
+        hr_image = hr_image.to(device)
         fake_hr = generator(lr_image)
         if testpatch:
             fake_hr = truncat_vgg(fake_hr)
-            for i in fake_hr.shape[0]:
-                temp = np.transpose(np.array(fake_hr[i]),(1,2,0))
-                temp_orig = np.transpose(np.array(hr_image[i]),(1,2,0))
-                plt.imsave(os.path.join(savefolderpath,"{}th_patch".format(i)),temp)
-                plt.imsave(os.path.join(savefolderpath, "{}th_patch_target".format(i)), temp_orig)
+            fake_hr = fake_hr[0]
+            hr_image = truncat_vgg(hr_image)
+            hr_image= hr_image[0]
+            for i in range(fake_hr.shape[0]//32):
+                temp = (np.array(fake_hr[i].cpu().detach()))
+#                print(np.shape(temp))
+                temp_orig = (np.array(hr_image[i].cpu().detach()))
+                plt.imshow(temp)
+                plt.savefig(os.path.join(savefolderpath,"{}th_patch.png".format(i)),dpi=300)
+                plt.imshow(temp_orig)
+                plt.savefig(os.path.join(savefolderpath, "{}th_patch_target.png".format(i)),dpi=300)
+#                plt.imsave(os.path.join(savefolderpath,"{}th_patch.png".format(i)),temp)
+ #               plt.imsave(os.path.join(savefolderpath, "{}th_patch_target.png".format(i)), temp_orig)
             break
         else:
             fake_hr = torch.clamp(fake_hr, min=0, max=1)
