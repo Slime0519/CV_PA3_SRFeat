@@ -47,6 +47,8 @@ def specify_generator_path(Basedir, version,epoch):
         gen_path = os.path.join(Basedir,"Generator","generator_{}th_model.pth".format(epoch-1))
     elif version== 'NotBN_pretrain':
         gen_path = os.path.join(Basedir,"NotBN_Generator","generator_{}th_model.pth".format(epoch-1))
+    elif version == 'NotBN':
+        gen_path = os.path.join(Basedir,"post_Generator", "NotBN_generator_{}th_model.pth".format(epoch-1))
     else:
         gen_path = os.path.join(Basedir,"post_Generator","generator_{}th_model.pth".format(epoch-1))
     return gen_path

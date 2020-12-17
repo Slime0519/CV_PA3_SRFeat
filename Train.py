@@ -48,7 +48,8 @@ if __name__ == "__main__":
     truncat_vgg = truncated_vgg()  # vgg(5,4) loss
 
     PRETRAINED_MODELPATH = os.path.join(DIRPATH_PRETRAIN, "generator_19th_model.pth")
-    generator = utils.load_model(generator, filepath=PRETRAINED_MODELPATH)
+    #generator = utils.load_model(generator, filepath=PRETRAINED_MODELPATH)
+    generator.load_state_dict(torch.load(PRETRAINED_MODELPATH))
     print("complete load model")
 
     generator = nn.DataParallel(generator).to(device)
@@ -150,10 +151,10 @@ if __name__ == "__main__":
             image_discriminator.requires_grad_(True)
             feat_discriminator.requires_grad_(True)
 
-            temp_mse =None
-            fake_hr =None
+           # temp_mse =None
+            #fake_hr =None
             torch.cuda.empty_cache()
-            gc.collect()
+            #gc.collect()
 
         scheduler1.step()
         scheduler2.step()

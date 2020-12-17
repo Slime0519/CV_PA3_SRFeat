@@ -38,7 +38,7 @@ if __name__ == "__main__":
                                        pin_memory=True)
 #    print(pretrained_modelpath)
     generator = Generator()
-    if generator_ver == "NotBN_pretrain":
+    if generator_ver == "NotBN_pretrain" or generator_ver == "NotBN":
         generator = NotBN_Generator()
 
     validation_PSNR =0
