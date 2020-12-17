@@ -73,8 +73,5 @@ if __name__ == "__main__":
         #temp_fake = None
         #fake_hr = None
 
-        save_image(temp_fake[0],  os.path.join(savefolderpath, "image{}.png".format(num_image)))
-        num_image +=1
-
     validation_PSNR = accum_psnr / len(valid_dataloader)
     print("average PSNR about dataset {}: {}".format(dataset_name, validation_PSNR))
