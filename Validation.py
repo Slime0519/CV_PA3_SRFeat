@@ -67,7 +67,6 @@ if __name__ == "__main__":
 
         # generate fake hr images
         fake_hr = generator(lr_image)
-
         temp_fake = torch.clamp(fake_hr, min=0, max=1)
         accum_psnr += psnr(temp_fake, hr_image)
         #temp_mse = None
