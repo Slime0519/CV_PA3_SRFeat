@@ -52,7 +52,7 @@ if __name__ == "__main__":
     generator = Generator().to(device)
     if testver == "NotBN_pretrain" or testver == "NotBN":
         generator = NotBN_Generator().to(device)
-        
+
     if testver == "pretrain":
         generator = utils.load_model(generator, filepath = pretrained_modelpath)
     else:
@@ -72,5 +72,5 @@ if __name__ == "__main__":
 
         fake_hr = torch.clamp(fake_hr, min=0, max=1)
         fake_hr = fake_hr[0]
-        save_image(fake_hr,os.path.join(DIRPATH_TESTIMAGE, testver+"_"+dataset_name, "image{}.png".format(imagenum)))
+        save_image(fake_hr,os.path.join(savefolderpath, "image{}.png".format(imagenum)))
         imagenum += 1
