@@ -26,8 +26,9 @@ This network can be roughly divided into feature extractor and HR image reconstr
 ### Discriminator
 
 <div align = 'center'>
-	<img src = "./Readme_images/SRFeat_discriminator.png">
+	<img src = "./Readme_images/SRFeat_Discriminator.png">
 </div>
+
 
 Disciriminator has typical structure. We should use two kinds of discriminator, image discriminator and feature discriminator.
 
@@ -39,7 +40,7 @@ Disciriminator has typical structure. We should use two kinds of discriminator, 
    - Feature-wise discriminator, help to generate realistic features.
 
 ### Perceptual loss
-Proposed in [Perceptual Losses for Real-Time Style Transfer and Super-Resolution ](https://arxiv.org/pdf/1603.08155) paper<br>
+Proposed in [Perceptual Losses for Real-Time Style Transfer and Super-Resolution ](https://arxiv.org/pdf/1603.08155) paper
 
 <div align = 'center'>
 	<img src = "./Readme_images/Perceptual_loss.png">
@@ -109,14 +110,72 @@ This function compare two feature map extracted intermediate layer in pretrained
 
 ### Pre-Training
 
+- Training Curve
+
 <div align = "center">
-    <img src= "Readme_images/Training_PSNR_pretrain.png" width = "500">
+    <img src= "Readme_images/Training_PSNR_pretrain.png" width = "500" >
+</div>
+- Validation PSNR(average)
+
+  | Dataset | BSD100 | Set14 |Set5|
+  | ---- | ---- | ---- |----|
+  | PSNR(dB) | 25.78 | 26.38 |30.56|
+
+
+### Train with Discriminator
+
+![result_example](./Readme_images/Result_example.png)
+
+Left is result of pretrained network, Right is final result.
+
+
+
+## Improvement
+
+### Details
+
+<div align = 'center'>
+	<img src = "./Readme_images/NotBNblock.png" width= 400>
+    <img src = "./Readme_images/cosine_lr.png" width = 400>
 </div>
 
+- NotBN block
+  - Proposed in "Enhanced Deep Residual Networks for Single Image Super-Resolution"([link](https://openaccess.thecvf.com/content_cvpr_2017_workshops/w12/papers/Lim_Enhanced_Deep_Residual_CVPR_2017_paper.pdf))
+  - Remove BN from original Resblock
+  - Good for SR task
 
+- Cosine Annealing
+  - Learning rate scheduling method
+  - Changes the learning rate according to the cosine function.
+  - Increase stability of training process
+
+### Result
+
+- Training curve(pretraining)
+
+<div align = "center">
+    <img src= "Readme_images/Training_PSNR_pretrain_NotBN.png" width = "500" >
+</div>
+
+- Validation result
+
+| Dataset  | BSD100 | Set14 | Set5  |
+| -------- | ------ | ----- | ----- |
+| PSNR(dB) | 25.82  | 26.44 | 30.72 |
+
+- Training with Discriminators
+
+![](./Readme_images/NotBN_example1.png)
+
+![](./Readme_images/NotBN_example2.png)
+
+Left images are original SRFeat result, and Right images are improved results.
 
 ## References
 
-1. ["Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network", CVPR 2017](https://arxiv.org/pdf/1609.04802)
-2. ["Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network", CVPR 2016](https://arxiv.org/pdf/1609.05158.pdf)
-3. ["Perceptual Losses for Real-Time Style Transfer and Super-Resolution", CVPR 2016 ](https://arxiv.org/pdf/1603.08155)
+1. ["SRFeat: Single Image Super-Resolution with Feature Discrimination", ECCV 2018](https://openaccess.thecvf.com/content_ECCV_2018/papers/Seong-Jin_Park_SRFeat_Single_Image_ECCV_2018_paper.pdf)
+2. ["Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network", CVPR 2017](https://arxiv.org/pdf/1609.04802)
+3. ["Enhanced Deep Residual Networks for Single Image Super-Resolution", CVPRW 2017](https://arxiv.org/pdf/1707.02921.pdf)
+4. ["SGDR: Stochastic Gradient Descent with Warm Restarts", ICLR 2017](https://arxiv.org/pdf/1608.03983.pdf)
+5. ["Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network", CVPR 2016](https://arxiv.org/pdf/1609.05158.pdf)
+6. ["Perceptual Losses for Real-Time Style Transfer and Super-Resolution", CVPR 2016 ](https://arxiv.org/pdf/1603.08155)
