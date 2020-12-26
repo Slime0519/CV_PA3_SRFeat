@@ -15,7 +15,6 @@ parser = argparse.ArgumentParser(description="SRFeat Test Module")
 parser.add_argument('--generator_version', type = str, default='post', help="specify version of generator wherther 'pretrain' or 'post'")
 parser.add_argument('--pre_trained_epoch', type=int, default=0, help="epoch of trained model")
 parser.add_argument('--dataset_name', type = str, default='BSD100', help = "name of dataset for test")
-parser.add_argument('--test_patch', type = bool, default=False, help="test for patch")
 
 UPSCALE_FACTOR = 4
 DIRPATH_TEST = "Dataset/valid"
